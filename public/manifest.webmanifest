@@ -1,0 +1,17 @@
+{
+  "name": "Game Center",
+  "short_name": "Game Center",
+  "description": "An original browser game arcade with an endless-score wing and a finish-the-game challenge wing.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff8ec",
+  "theme_color": "#FF5FA2",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
