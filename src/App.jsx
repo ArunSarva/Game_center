@@ -4842,14 +4842,43 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
     PLAYER_W = 22,
     PLAYER_H = 16;
   const BULLET_SPEED = 5.2;
-  const FIRE_COOLDOWN = 220;
+  const GUN_LEVELS = [
+    { cooldown: 220, shots: [{ dx: 0, angle: 0 }] },
+    {
+      cooldown: 195,
+      shots: [
+        { dx: -6, angle: 0 },
+        { dx: 6, angle: 0 },
+      ],
+    },
+    {
+      cooldown: 165,
+      shots: [
+        { dx: -7, angle: -0.14 },
+        { dx: 0, angle: 0 },
+        { dx: 7, angle: 0.14 },
+      ],
+    },
+    {
+      cooldown: 125,
+      shots: [
+        { dx: -8, angle: -0.22 },
+        { dx: -3, angle: 0 },
+        { dx: 3, angle: 0 },
+        { dx: 8, angle: 0.22 },
+      ],
+    },
+  ];
+  const MAX_GUN_LEVEL = GUN_LEVELS.length;
+  const POWERUP_INTERVAL = 13000;
 
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const stateRef = useRef(null);
-  const keysRef = useRef({ left: false, right: false, fire: false });
+  const keysRef = useRef({ left: false, right: false });
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [gunLevel, setGunLevel] = useState(1);
   const [over, setOver] = useState(false);
   const [shake, setShake] = useState(false);
 
@@ -4858,11 +4887,14 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
       playerX: W / 2 - PLAYER_W / 2,
       bullets: [],
       enemies: [],
+      powerup: null,
       particles: [],
       lives: startLives,
       score: 0,
+      gunLevel: 1,
       spawnTimer: 0,
       fireTimer: 0,
+      powerupTimer: POWERUP_INTERVAL,
       elapsed: 0,
       ended: false,
     };
@@ -4871,6 +4903,7 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setScore(0);
     setLives(startLives);
+    setGunLevel(1);
     setOver(false);
     setShake(false);
   }
@@ -4901,10 +4934,33 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         if (keysRef.current.right)
           s.playerX = Math.min(W - PLAYER_W, s.playerX + 3.4);
         s.fireTimer -= dt;
-        if (keysRef.current.fire && s.fireTimer <= 0) {
-          s.bullets.push({ x: s.playerX + PLAYER_W / 2 - 2, y: PLAYER_Y });
-          s.fireTimer = FIRE_COOLDOWN;
+        if (s.fireTimer <= 0) {
+          const level = GUN_LEVELS[s.gunLevel - 1];
+          level.shots.forEach((shot) => {
+            s.bullets.push({
+              x: s.playerX + PLAYER_W / 2 - 2 + shot.dx,
+              y: PLAYER_Y,
+              vx: Math.sin(shot.angle) * BULLET_SPEED,
+              vy: -Math.cos(shot.angle) * BULLET_SPEED,
+            });
+          });
+          s.fireTimer = level.cooldown;
           AudioEngine.playSfx("select");
+        }
+        s.powerupTimer -= dt;
+        if (s.powerupTimer <= 0) {
+          s.powerupTimer = POWERUP_INTERVAL;
+          if (s.gunLevel < MAX_GUN_LEVEL && !s.powerup) {
+            s.powerup = {
+              x: 16 + Math.random() * (W - 32),
+              y: -14,
+              vy: 1.3,
+            };
+          }
+        }
+        if (s.powerup) {
+          s.powerup.y += s.powerup.vy;
+          if (s.powerup.y > H + 14) s.powerup = null;
         }
         s.spawnTimer -= dt;
         if (s.spawnTimer <= 0) {
@@ -4918,7 +4974,10 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
             phase: Math.random() * Math.PI * 2,
           });
         }
-        s.bullets.forEach((b) => (b.y -= BULLET_SPEED));
+        s.bullets.forEach((b) => {
+          b.x += b.vx;
+          b.y += b.vy;
+        });
         s.bullets = s.bullets.filter((b) => b.y > -10);
         s.enemies.forEach((e) => {
           e.y += e.vy;
@@ -4974,6 +5033,26 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
           if (!e.dead && e.y > H) e.dead = true;
         });
         s.enemies = s.enemies.filter((e) => !e.dead);
+        if (
+          s.powerup &&
+          pr.x < s.powerup.x + 10 &&
+          pr.x + pr.w > s.powerup.x - 10 &&
+          pr.y < s.powerup.y + 10 &&
+          pr.y + pr.h > s.powerup.y - 10
+        ) {
+          s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
+          setGunLevel(s.gunLevel);
+          spawnBurst(
+            s.particles,
+            s.powerup.x,
+            s.powerup.y,
+            "#ffdc80",
+            16,
+            "score",
+          );
+          AudioEngine.playSfx("win");
+          s.powerup = null;
+        }
       }
       ctx.fillStyle = "#0e1230";
       ctx.fillRect(0, 0, W, H);
@@ -4994,6 +5073,17 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
       });
       ctx.fillStyle = "#ffdc80";
       s.bullets.forEach((b) => ctx.fillRect(b.x, b.y - 8, 4, 8));
+      if (s.powerup) {
+        ctx.fillStyle = "#ffdc80";
+        ctx.beginPath();
+        ctx.arc(s.powerup.x, s.powerup.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#0e1230";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("P", s.powerup.x, s.powerup.y + 3);
+        ctx.textAlign = "left";
+      }
       ctx.fillStyle = "#78efd9";
       ctx.beginPath();
       ctx.moveTo(s.playerX + PLAYER_W / 2, PLAYER_Y);
@@ -5019,17 +5109,11 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         keysRef.current.right = true;
         e.preventDefault();
       }
-      if ([" ", "ArrowUp", "w", "W"].includes(e.key)) {
-        keysRef.current.fire = true;
-        e.preventDefault();
-      }
     }
     function onKeyUp(e) {
       if (["ArrowLeft", "a", "A"].includes(e.key)) keysRef.current.left = false;
       if (["ArrowRight", "d", "D"].includes(e.key))
         keysRef.current.right = false;
-      if ([" ", "ArrowUp", "w", "W"].includes(e.key))
-        keysRef.current.fire = false;
     }
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -5053,6 +5137,7 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Score: {score}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Gun Lv.{gunLevel}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -5085,21 +5170,6 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
           ←
         </button>
         <button
-          onMouseDown={() => press("fire", true)}
-          onMouseUp={() => press("fire", false)}
-          onMouseLeave={() => press("fire", false)}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            press("fire", true);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            press("fire", false);
-          }}
-        >
-          ✦
-        </button>
-        <button
           onMouseDown={() => press("right", true)}
           onMouseUp={() => press("right", false)}
           onMouseLeave={() => press("right", false)}
@@ -5116,7 +5186,8 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Arrows / A-D to move, Space or ✦ to fire. Survive the waves.
+        Your gun fires automatically — just dodge with the arrows. Grab the gold
+        pickups to power up your gun.
       </p>
     </div>
   );
@@ -5134,7 +5205,35 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const PLAYER_W = 18,
     PLAYER_H = 16;
   const BULLET_SPEED = 5.6;
-  const FIRE_COOLDOWN = 200;
+  const GUN_LEVELS = [
+    { cooldown: 200, shots: [{ dy: 0, angle: 0 }] },
+    {
+      cooldown: 175,
+      shots: [
+        { dy: -5, angle: 0 },
+        { dy: 5, angle: 0 },
+      ],
+    },
+    {
+      cooldown: 150,
+      shots: [
+        { dy: -6, angle: -0.14 },
+        { dy: 0, angle: 0 },
+        { dy: 6, angle: 0.14 },
+      ],
+    },
+    {
+      cooldown: 115,
+      shots: [
+        { dy: -7, angle: -0.22 },
+        { dy: -2, angle: 0 },
+        { dy: 2, angle: 0 },
+        { dy: 7, angle: 0.22 },
+      ],
+    },
+  ];
+  const MAX_GUN_LEVEL = GUN_LEVELS.length;
+  const POWERUP_INTERVAL = 13000;
 
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -5144,10 +5243,10 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
     down: false,
     left: false,
     right: false,
-    fire: false,
   });
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [gunLevel, setGunLevel] = useState(1);
   const [over, setOver] = useState(false);
   const [shake, setShake] = useState(false);
 
@@ -5156,11 +5255,14 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
       player: { x: 30, y: H / 2 - PLAYER_H / 2 },
       bullets: [],
       enemies: [],
+      powerup: null,
       particles: [],
       lives: startLives,
       score: 0,
+      gunLevel: 1,
       spawnTimer: 0,
       fireTimer: 0,
+      powerupTimer: POWERUP_INTERVAL,
       elapsed: 0,
       ended: false,
     };
@@ -5169,6 +5271,7 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setScore(0);
     setLives(startLives);
+    setGunLevel(1);
     setOver(false);
     setShake(false);
   }
@@ -5200,10 +5303,33 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
         if (keysRef.current.left) p.x = Math.max(0, p.x - 2.6);
         if (keysRef.current.right) p.x = Math.min(W / 2, p.x + 2.6);
         s.fireTimer -= dt;
-        if (keysRef.current.fire && s.fireTimer <= 0) {
-          s.bullets.push({ x: p.x + PLAYER_W, y: p.y + PLAYER_H / 2 - 2 });
-          s.fireTimer = FIRE_COOLDOWN;
+        if (s.fireTimer <= 0) {
+          const level = GUN_LEVELS[s.gunLevel - 1];
+          level.shots.forEach((shot) => {
+            s.bullets.push({
+              x: p.x + PLAYER_W,
+              y: p.y + PLAYER_H / 2 - 2 + shot.dy,
+              vx: Math.cos(shot.angle) * BULLET_SPEED,
+              vy: Math.sin(shot.angle) * BULLET_SPEED,
+            });
+          });
+          s.fireTimer = level.cooldown;
           AudioEngine.playSfx("select");
+        }
+        s.powerupTimer -= dt;
+        if (s.powerupTimer <= 0) {
+          s.powerupTimer = POWERUP_INTERVAL;
+          if (s.gunLevel < MAX_GUN_LEVEL && !s.powerup) {
+            s.powerup = {
+              x: W + 10,
+              y: 10 + Math.random() * (H - 30),
+              vx: -1.4,
+            };
+          }
+        }
+        if (s.powerup) {
+          s.powerup.x += s.powerup.vx;
+          if (s.powerup.x < -14) s.powerup = null;
         }
         s.spawnTimer -= dt;
         if (s.spawnTimer <= 0) {
@@ -5217,7 +5343,10 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
             wob: Math.random() * Math.PI * 2,
           });
         }
-        s.bullets.forEach((b) => (b.x += BULLET_SPEED));
+        s.bullets.forEach((b) => {
+          b.x += b.vx;
+          b.y += b.vy;
+        });
         s.bullets = s.bullets.filter((b) => b.x < W + 10);
         s.enemies.forEach((e) => {
           e.x += e.vx;
@@ -5270,6 +5399,26 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
           }
         });
         s.enemies = s.enemies.filter((e) => !e.dead && e.x > -30);
+        if (
+          s.powerup &&
+          pr.x < s.powerup.x + 10 &&
+          pr.x + pr.w > s.powerup.x - 10 &&
+          pr.y < s.powerup.y + 10 &&
+          pr.y + pr.h > s.powerup.y - 10
+        ) {
+          s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
+          setGunLevel(s.gunLevel);
+          spawnBurst(
+            s.particles,
+            s.powerup.x,
+            s.powerup.y,
+            "#ffdc80",
+            16,
+            "score",
+          );
+          AudioEngine.playSfx("win");
+          s.powerup = null;
+        }
       }
       ctx.fillStyle = "#1c2417";
       ctx.fillRect(0, 0, W, H);
@@ -5279,6 +5428,17 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
       s.enemies.forEach((e) => ctx.fillRect(e.x, e.y, e.w, e.h));
       ctx.fillStyle = "#ffdc80";
       s.bullets.forEach((b) => ctx.fillRect(b.x, b.y, 8, 3));
+      if (s.powerup) {
+        ctx.fillStyle = "#ffdc80";
+        ctx.beginPath();
+        ctx.arc(s.powerup.x, s.powerup.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#1c2417";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("P", s.powerup.x, s.powerup.y + 3);
+        ctx.textAlign = "left";
+      }
       ctx.fillStyle = "#78efd9";
       ctx.fillRect(s.player.x, s.player.y, PLAYER_W, PLAYER_H);
       updateAndDrawParticles(ctx, s.particles);
@@ -5303,7 +5463,6 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
       ArrowRight: "right",
       d: "right",
       D: "right",
-      " ": "fire",
     };
     function onKeyDown(e) {
       if (map[e.key]) {
@@ -5336,6 +5495,7 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Score: {score}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Gun Lv.{gunLevel}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -5415,25 +5575,9 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
           </button>
         </div>
       </div>
-      <div className="ga-dpad-row">
-        <button
-          onMouseDown={() => press("fire", true)}
-          onMouseUp={() => press("fire", false)}
-          onMouseLeave={() => press("fire", false)}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            press("fire", true);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            press("fire", false);
-          }}
-        >
-          🔫 Fire
-        </button>
-      </div>
       <p className="ga-hint">
-        Arrows / WASD to move, Space or Fire to shoot. Hold the line.
+        Arrows / WASD to move. Your gun fires automatically — grab the gold
+        pickups to power it up.
       </p>
     </div>
   );
@@ -7150,8 +7294,15 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const THRUST = 0.12,
     DRAG = 0.988,
     TURN_SPEED = 0.06,
-    BULLET_SPEED = 4.2,
-    FIRE_COOLDOWN = 260;
+    BULLET_SPEED = 4.2;
+  const GUN_LEVELS = [
+    { cooldown: 260, offsets: [0] },
+    { cooldown: 230, offsets: [-0.08, 0.08] },
+    { cooldown: 195, offsets: [-0.16, 0, 0.16] },
+    { cooldown: 150, offsets: [-0.24, -0.08, 0.08, 0.24] },
+  ];
+  const MAX_GUN_LEVEL = GUN_LEVELS.length;
+  const POWERUP_INTERVAL = 13000;
 
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -7160,10 +7311,10 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
     left: false,
     right: false,
     thrust: false,
-    fire: false,
   });
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [gunLevel, setGunLevel] = useState(1);
   const [over, setOver] = useState(false);
   const [shake, setShake] = useState(false);
 
@@ -7189,11 +7340,14 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
       ship: { x: W / 2, y: H / 2, vx: 0, vy: 0, angle: -Math.PI / 2 },
       bullets: [],
       asteroids: [makeAsteroid(3), makeAsteroid(3), makeAsteroid(3)],
+      powerup: null,
       particles: [],
       lives: startLives,
       score: 0,
+      gunLevel: 1,
       fireTimer: 0,
       spawnTimer: spawnMs,
+      powerupTimer: POWERUP_INTERVAL,
       invuln: 1200,
       ended: false,
     };
@@ -7202,6 +7356,7 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setScore(0);
     setLives(startLives);
+    setGunLevel(1);
     setOver(false);
     setShake(false);
   }
@@ -7251,16 +7406,37 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
         sh.y = wrap(sh.y + sh.vy, H);
         s.invuln = Math.max(0, s.invuln - dt);
         s.fireTimer -= dt;
-        if (keysRef.current.fire && s.fireTimer <= 0) {
-          s.bullets.push({
-            x: sh.x + Math.cos(sh.angle) * 10,
-            y: sh.y + Math.sin(sh.angle) * 10,
-            vx: Math.cos(sh.angle) * BULLET_SPEED,
-            vy: Math.sin(sh.angle) * BULLET_SPEED,
-            life: 60,
+        if (s.fireTimer <= 0) {
+          const level = GUN_LEVELS[s.gunLevel - 1];
+          level.offsets.forEach((off) => {
+            const ang = sh.angle + off;
+            s.bullets.push({
+              x: sh.x + Math.cos(ang) * 10,
+              y: sh.y + Math.sin(ang) * 10,
+              vx: Math.cos(ang) * BULLET_SPEED,
+              vy: Math.sin(ang) * BULLET_SPEED,
+              life: 60,
+            });
           });
-          s.fireTimer = FIRE_COOLDOWN;
+          s.fireTimer = level.cooldown;
           AudioEngine.playSfx("select");
+        }
+        s.powerupTimer -= dt;
+        if (s.powerupTimer <= 0) {
+          s.powerupTimer = POWERUP_INTERVAL;
+          if (s.gunLevel < MAX_GUN_LEVEL && !s.powerup) {
+            const ang = Math.random() * Math.PI * 2;
+            s.powerup = {
+              x: Math.random() * W,
+              y: Math.random() * H,
+              vx: Math.cos(ang) * 0.5,
+              vy: Math.sin(ang) * 0.5,
+            };
+          }
+        }
+        if (s.powerup) {
+          s.powerup.x = wrap(s.powerup.x + s.powerup.vx, W);
+          s.powerup.y = wrap(s.powerup.y + s.powerup.vy, H);
         }
         s.bullets.forEach((b) => {
           b.x = wrap(b.x + b.vx, W);
@@ -7304,6 +7480,23 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
             }
           }
         }
+        if (
+          s.powerup &&
+          Math.hypot(s.powerup.x - sh.x, s.powerup.y - sh.y) < 16
+        ) {
+          s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
+          setGunLevel(s.gunLevel);
+          spawnBurst(
+            s.particles,
+            s.powerup.x,
+            s.powerup.y,
+            "#ffdc80",
+            16,
+            "score",
+          );
+          AudioEngine.playSfx("win");
+          s.powerup = null;
+        }
         s.spawnTimer -= dt;
         if (s.spawnTimer <= 0) {
           s.spawnTimer = spawnMs;
@@ -7325,6 +7518,17 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
         ctx.arc(b.x, b.y, 2, 0, Math.PI * 2);
         ctx.fill();
       });
+      if (s2.powerup) {
+        ctx.fillStyle = "#ffdc80";
+        ctx.beginPath();
+        ctx.arc(s2.powerup.x, s2.powerup.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#101225";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("P", s2.powerup.x, s2.powerup.y + 3);
+        ctx.textAlign = "left";
+      }
       const sh2 = s2.ship;
       ctx.save();
       ctx.translate(sh2.x, sh2.y);
@@ -7362,17 +7566,12 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
         keysRef.current.thrust = true;
         e.preventDefault();
       }
-      if (e.key === " ") {
-        keysRef.current.fire = true;
-        e.preventDefault();
-      }
     }
     function onKeyUp(e) {
       if (["ArrowLeft", "a", "A"].includes(e.key)) keysRef.current.left = false;
       if (["ArrowRight", "d", "D"].includes(e.key))
         keysRef.current.right = false;
       if (["ArrowUp", "w", "W"].includes(e.key)) keysRef.current.thrust = false;
-      if (e.key === " ") keysRef.current.fire = false;
     }
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -7396,6 +7595,7 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Score: {score}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Gun Lv.{gunLevel}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -7443,21 +7643,6 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
           ▲
         </button>
         <button
-          onMouseDown={() => press("fire", true)}
-          onMouseUp={() => press("fire", false)}
-          onMouseLeave={() => press("fire", false)}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            press("fire", true);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            press("fire", false);
-          }}
-        >
-          ✦
-        </button>
-        <button
           onMouseDown={() => press("right", true)}
           onMouseUp={() => press("right", false)}
           onMouseLeave={() => press("right", false)}
@@ -7474,8 +7659,8 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Rotate, thrust, and fire to blast the drifting rocks. They split when
-        hit.
+        Rotate and thrust to steer — your gun fires automatically. Grab the gold
+        pickups to power it up. Rocks split when hit.
       </p>
     </div>
   );
@@ -8362,7 +8547,15 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
     H = ROWS * CELL;
   const PLAYER_MIN_ROW = ROWS - 3;
   const BULLET_SPEED = 6;
-  const FIRE_COOLDOWN = 160;
+  const GUN_LEVELS = [
+    { cooldown: 160, offsets: [0] },
+    { cooldown: 140, offsets: [-1, 1] },
+    { cooldown: 120, offsets: [-1, 0, 1] },
+    { cooldown: 90, offsets: [-2, -1, 0, 1, 2] },
+  ];
+  const MAX_GUN_LEVEL = GUN_LEVELS.length;
+  const POWERUP_INTERVAL = 13000;
+  const POWERUP_FALL_MS = 450;
 
   function freshMushrooms() {
     const set = new Set();
@@ -8387,10 +8580,10 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
     right: false,
     up: false,
     down: false,
-    fire: false,
   });
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [gunLevel, setGunLevel] = useState(1);
   const [over, setOver] = useState(false);
   const [shake, setShake] = useState(false);
 
@@ -8400,12 +8593,16 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
       worms: [freshWorm(0)],
       mushrooms: freshMushrooms(),
       bullets: [],
+      powerup: null,
       particles: [],
       lives: startLives,
       score: 0,
+      gunLevel: 1,
       wormTimer: 0,
       moveAccum: 0,
       fireTimer: 0,
+      powerupTimer: POWERUP_INTERVAL,
+      powerupFallTimer: 0,
       ended: false,
     };
   }
@@ -8413,6 +8610,7 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setScore(0);
     setLives(startLives);
+    setGunLevel(1);
     setOver(false);
     setShake(false);
   }
@@ -8450,10 +8648,32 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
             s.player.r = Math.min(ROWS - 1, s.player.r + 1);
         }
         s.fireTimer -= dt;
-        if (keysRef.current.fire && s.fireTimer <= 0) {
-          s.bullets.push({ c: s.player.c, y: s.player.r * CELL });
-          s.fireTimer = FIRE_COOLDOWN;
+        if (s.fireTimer <= 0) {
+          const level = GUN_LEVELS[s.gunLevel - 1];
+          level.offsets.forEach((off) => {
+            const c = s.player.c + off;
+            if (c >= 0 && c < COLS) {
+              s.bullets.push({ c, y: s.player.r * CELL });
+            }
+          });
+          s.fireTimer = level.cooldown;
           AudioEngine.playSfx("select");
+        }
+        s.powerupTimer -= dt;
+        if (s.powerupTimer <= 0) {
+          s.powerupTimer = POWERUP_INTERVAL;
+          if (s.gunLevel < MAX_GUN_LEVEL && !s.powerup) {
+            s.powerup = { r: 0, c: Math.floor(Math.random() * COLS) };
+            s.powerupFallTimer = POWERUP_FALL_MS;
+          }
+        }
+        if (s.powerup) {
+          s.powerupFallTimer -= dt;
+          if (s.powerupFallTimer <= 0) {
+            s.powerupFallTimer = POWERUP_FALL_MS;
+            s.powerup.r += 1;
+            if (s.powerup.r >= ROWS) s.powerup = null;
+          }
         }
         s.bullets.forEach((b) => (b.y -= BULLET_SPEED));
         s.bullets = s.bullets.filter((b) => b.y > -CELL);
@@ -8551,6 +8771,20 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
         s.worms.forEach((worm) => {
           if (worm.row === pr.r && worm.cols.includes(pr.c)) hit(s);
         });
+        if (s.powerup && s.powerup.r === pr.r && s.powerup.c === pr.c) {
+          s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
+          setGunLevel(s.gunLevel);
+          spawnBurst(
+            s.particles,
+            pr.c * CELL + CELL / 2,
+            pr.r * CELL + CELL / 2,
+            "#ffdc80",
+            16,
+            "score",
+          );
+          AudioEngine.playSfx("win");
+          s.powerup = null;
+        }
       }
       const ctx = canvasRef.current.getContext("2d");
       const s2 = stateRef.current;
@@ -8581,6 +8815,27 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
       s2.bullets.forEach((b) =>
         ctx.fillRect(b.c * CELL + CELL / 2 - 2, b.y, 4, 8),
       );
+      if (s2.powerup) {
+        ctx.fillStyle = "#ffdc80";
+        ctx.beginPath();
+        ctx.arc(
+          s2.powerup.c * CELL + CELL / 2,
+          s2.powerup.r * CELL + CELL / 2,
+          CELL / 2 - 3,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+        ctx.fillStyle = "#101f14";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "P",
+          s2.powerup.c * CELL + CELL / 2,
+          s2.powerup.r * CELL + CELL / 2 + 3,
+        );
+        ctx.textAlign = "left";
+      }
       ctx.fillStyle = "#78efd9";
       ctx.fillRect(
         s2.player.c * CELL + 3,
@@ -8606,7 +8861,6 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
       w: "up",
       ArrowDown: "down",
       s: "down",
-      " ": "fire",
     };
     function onKeyDown(e) {
       if (map[e.key]) {
@@ -8639,6 +8893,7 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Score: {score}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Gun Lv.{gunLevel}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -8718,26 +8973,10 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
           </button>
         </div>
       </div>
-      <div className="ga-dpad-row">
-        <button
-          onMouseDown={() => press("fire", true)}
-          onMouseUp={() => press("fire", false)}
-          onMouseLeave={() => press("fire", false)}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            press("fire", true);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            press("fire", false);
-          }}
-        >
-          🔫 Fire
-        </button>
-      </div>
       <p className="ga-hint">
-        Move within your zone, hold Fire to shoot upward. Clear the segmented
-        swarm through the mushroom field.
+        Move within your zone — your gun fires automatically upward. Grab the
+        gold pickups to power it up. Clear the segmented swarm through the
+        mushroom field.
       </p>
     </div>
   );
@@ -11565,8 +11804,8 @@ function Hub({ best, onPlay, difficulty, onChangeDifficulty }) {
       </section>
 
       <footer className="ga-footer">
-        {GAMES.length} of 50 planned cabinets are live. More get added to
-        both wings over time.
+        18 of 50 planned cabinets are live. More get added to both wings over
+        time.
       </footer>
     </div>
   );
