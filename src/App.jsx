@@ -14495,12 +14495,16 @@ function GlobalStyle() {
         -webkit-tap-highlight-color: transparent;
         overflow-x: hidden;
       }
+      .ga-root.ga-root-shell { display: flex; flex-direction: column; align-items: center; }
+      .ga-root.ga-root-shell .ga-shell { width: 100%; margin-top: auto; margin-bottom: auto; }
       @keyframes ga-rainbow-shift {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
       }
       .ga-root * { box-sizing: border-box; }
+      .ga-root button { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+      .ga-canvas-wrap, .ga-canvas, .ga-game-col { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none; }
       .ga-hub { max-width: 980px; margin: 0 auto; }
 
       .ga-marquee-title-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
@@ -14599,12 +14603,12 @@ function GlobalStyle() {
 
       .ga-footer { text-align: center; color: #6b4f8f; font-size: 12px; font-weight: 700; margin-top: 20px; }
 
-      .ga-shell { max-width: 460px; margin: 0 auto; }
-      .ga-shell-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+      .ga-shell { max-width: 460px; margin: 12px auto 0; padding: max(20px, calc(env(safe-area-inset-top) + 12px)) 6px 0; }
+      .ga-shell-header { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
       .ga-shell-title { display: flex; align-items: center; gap: 8px; font-weight: 800; font-family: 'Baloo 2', sans-serif; flex-grow: 1; justify-content: center; color: var(--ink); }
       .ga-shell-best { font-size: 12px; color: #6b4f8f; font-weight: 700; }
       .ga-shell-difficulty { color: var(--pink); font-weight: 800; }
-      .ga-back-btn { display: flex; align-items: center; gap: 6px; background: #fff; border: 2px solid var(--pink); color: var(--pink); padding: 7px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 800; box-shadow: 0 3px 0 rgba(0,0,0,0.08); }
+      .ga-back-btn { display: flex; align-items: center; gap: 6px; flex-shrink: 0; background: #fff; border: 2px solid var(--pink); color: var(--pink); padding: 10px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 800; box-shadow: 0 3px 0 rgba(0,0,0,0.08); }
       .ga-back-btn:hover { background: var(--pink); color: #fff; }
 
       .ga-cabinet-frame { position: relative; background: var(--bg-deep); border: 6px solid var(--yellow); border-radius: 22px; padding: 18px; box-shadow: inset 0 0 16px rgba(0,0,0,0.28), 0 6px 0 rgba(0,0,0,0.12); max-width: 100%; overflow-x: auto; }
@@ -14659,11 +14663,11 @@ function GlobalStyle() {
 
       .ga-2048-grid { display: grid; grid-template-columns: repeat(4, 60px); gap: 8px; background: var(--surface); padding: 8px; border-radius: 12px; border: 3px solid var(--orange); }
       .ga-2048-tile { width: 60px; height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; }
-      .ga-dpad { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-      .ga-dpad button { width: 40px; height: 34px; border-radius: 10px; background: var(--blue); color: #fff; border: none; cursor: pointer; font-size: 16px; font-weight: 800; box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
-      .ga-dpad > div { display: flex; gap: 6px; }
-      .ga-dpad-row { display: flex; flex-direction: row; gap: 10px; }
-      .ga-dpad-row button { width: 52px; height: 42px; border-radius: 12px; background: var(--purple); color: #fff; border: none; cursor: pointer; font-size: 18px; font-weight: 800; box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+      .ga-dpad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      .ga-dpad button { width: 56px; height: 48px; border-radius: 12px; background: var(--blue); color: #fff; border: none; cursor: pointer; font-size: 20px; font-weight: 800; box-shadow: 0 3px 0 rgba(0,0,0,0.2); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+      .ga-dpad > div { display: flex; gap: 8px; }
+      .ga-dpad-row { display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .ga-dpad-row button { min-width: 64px; height: 52px; padding: 0 14px; border-radius: 14px; background: var(--purple); color: #fff; border: none; cursor: pointer; font-size: 18px; font-weight: 800; box-shadow: 0 3px 0 rgba(0,0,0,0.2); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
 
       .ga-pinball-backbox { background: #1e1f2c; border: 3px solid #3f4169; border-radius: 12px; padding: 10px 16px 12px; width: 100%; max-width: 320px; }
       .ga-pinball-score { font-family: 'Courier New', monospace; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #ffb381; text-align: center; text-shadow: 0 0 3px rgba(255,179,129,0.5), 0 0 8px rgba(255,179,129,0.25); }
@@ -14775,8 +14779,14 @@ function GlobalStyle() {
         .ga-mine-grid { grid-template-columns: repeat(8, 28px); gap: 2px; }
         .ga-mine-cell { width: 28px; height: 28px; font-size: 11px; }
         .ga-cabinet-frame { padding: 10px; border-width: 4px; }
-        .ga-root { padding: 20px 10px 50px; }
+        .ga-root { padding: 50px 10px 50px; }
         .ga-marquee h1 { letter-spacing: 2px; }
+        .ga-dpad button { width: 68px; height: 58px; font-size: 24px; }
+        .ga-dpad > div { gap: 10px; }
+        .ga-dpad-row { gap: 14px; }
+        .ga-dpad-row button { min-width: 76px; height: 62px; font-size: 20px; padding: 0 16px; }
+        .ga-shell { margin-top: 22px; }
+        .ga-back-btn { padding: 10px 16px; font-size: 14px; }
       }
 
       .ga-cabinet:active,
@@ -14832,6 +14842,9 @@ const DIFFICULTIES = ["easy", "medium", "hard"];
 
 export default function GameArcadeApp() {
   const [view, setView] = useState("hub");
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
   const [best, setBest] = useState({});
   const [difficulty, setDifficulty] = useState(() => {
     const stored = storageGet("difficulty");
@@ -14875,7 +14888,7 @@ export default function GameArcadeApp() {
   const currentGame = view !== "hub" ? GAMES.find((g) => g.id === view) : null;
 
   return (
-    <div className="ga-root">
+    <div className={currentGame ? "ga-root ga-root-shell" : "ga-root"}>
       <GlobalStyle />
       {currentGame ? (
         <GameShell
