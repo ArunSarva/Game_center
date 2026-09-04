@@ -4558,6 +4558,22 @@ function mazeOpen(r, c) {
   if (r < 0 || r >= MAZE_ROWCOUNT || c < 0 || c >= MAZE_COLS) return false;
   return MAZE_ROWS[r][c] !== "#";
 }
+const GHOST_COLORS = [
+  "#ff9696",
+  "#ffdc80",
+  "#bea9ff",
+  "#8dd1ff",
+  "#ffb381",
+  "#b4eb94",
+];
+function randomOpenMazeCell(avoidR, avoidC) {
+  let r, c;
+  do {
+    r = Math.floor(Math.random() * MAZE_ROWCOUNT);
+    c = Math.floor(Math.random() * MAZE_COLS);
+  } while (!mazeOpen(r, c) || (r === avoidR && c === avoidC));
+  return { r, c };
+}
 
 function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const { startLives, ghostMs } = {
@@ -4581,6 +4597,7 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const stateRef = useRef(null);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [level, setLevel] = useState(1);
   const [over, setOver] = useState(null);
   const [shake, setShake] = useState(false);
 
@@ -4605,10 +4622,17 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
       player: { r: START.r, c: START.c, facing: "right" },
       dots: grid,
       dotsLeft: total,
-      ghosts: GHOST_START.map((g) => ({ ...g, timer: 0 })),
+      ghosts: GHOST_START.map((g) => ({
+        ...g,
+        homeR: g.r,
+        homeC: g.c,
+        timer: 0,
+      })),
+      ghostMs,
       particles: [],
       lives: startLives,
       score: 0,
+      level: 1,
       ended: false,
     };
   }
@@ -4622,6 +4646,7 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = s;
     setScore(0);
     setLives(startLives);
+    setLevel(1);
     setOver(null);
     setShake(false);
   }
@@ -4643,8 +4668,40 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
       setScore(s.score);
       AudioEngine.playSfx("coin");
       if (s.dotsLeft <= 0) {
-        s.ended = true;
-        setOver("win");
+        s.level += 1;
+        setLevel(s.level);
+        AudioEngine.playSfx("win");
+        const { grid, total } = freshDots();
+        s.dots = grid;
+        s.dotsLeft = total;
+        s.ghostMs = Math.max(90, s.ghostMs - 20);
+        if (s.level % 2 === 0) {
+          const spot =
+            s.ghosts.length < GHOST_START.length
+              ? {
+                  r: GHOST_START[s.ghosts.length].r,
+                  c: GHOST_START[s.ghosts.length].c,
+                }
+              : randomOpenMazeCell(START.r, START.c);
+          s.ghosts.push({
+            r: spot.r,
+            c: spot.c,
+            homeR: spot.r,
+            homeC: spot.c,
+            color: GHOST_COLORS[s.ghosts.length % GHOST_COLORS.length],
+            timer: 0,
+          });
+        }
+        s.player.r = START.r;
+        s.player.c = START.c;
+        if (s.dots[s.player.r][s.player.c]) {
+          s.dots[s.player.r][s.player.c] = false;
+          s.dotsLeft -= 1;
+        }
+        s.ghosts.forEach((g) => {
+          g.r = g.homeR;
+          g.c = g.homeC;
+        });
       }
     }
   }
@@ -4668,9 +4725,9 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
     } else {
       s.player.r = START.r;
       s.player.c = START.c;
-      s.ghosts.forEach((g, i) => {
-        g.r = GHOST_START[i].r;
-        g.c = GHOST_START[i].c;
+      s.ghosts.forEach((g) => {
+        g.r = g.homeR;
+        g.c = g.homeC;
       });
     }
   }
@@ -4685,7 +4742,7 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
       if (!s.ended) {
         s.ghosts.forEach((g) => {
           g.timer += dt;
-          if (g.timer >= ghostMs) {
+          if (g.timer >= s.ghostMs) {
             g.timer = 0;
             const options = Object.entries(DIRS).filter(([, [dr, dc]]) =>
               mazeOpen(g.r + dr, g.c + dc),
@@ -4810,6 +4867,7 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Dots: {score}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Level: {level}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -4817,12 +4875,12 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
       </div>
       {over && (
         <Overlay
-          emoji={over === "win" ? "👻" : "💥"}
-          title={over === "win" ? "Maze cleared!" : "Caught!"}
-          statLines={[`Dots eaten: ${score}`]}
+          emoji="💥"
+          title="Caught!"
+          statLines={[`Dots eaten: ${score}`, `Level reached: ${level}`]}
           onRestart={reset}
           onExit={goHome}
-          sound={over === "win" ? "win" : "lose"}
+          sound="lose"
         />
       )}
       <div className="ga-dpad">
@@ -4834,7 +4892,8 @@ function MazeMuncherGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </div>
       </div>
       <p className="ga-hint">
-        Arrow keys to move. Eat every dot, don't let the ghosts catch you.
+        Arrow keys to move. Clear a maze to advance — ghosts get faster and more
+        numerous each level, until they catch you.
       </p>
     </div>
   );
@@ -4855,7 +4914,13 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const BULLET_SPEED = 5.2;
   const GUN_LEVELS = [
     { cooldown: 220, shots: [{ dx: 0, angle: 0 }] },
-    { cooldown: 195, shots: [{ dx: -6, angle: 0 }, { dx: 6, angle: 0 }] },
+    {
+      cooldown: 195,
+      shots: [
+        { dx: -6, angle: 0 },
+        { dx: 6, angle: 0 },
+      ],
+    },
     {
       cooldown: 165,
       shots: [
@@ -5047,7 +5112,14 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         ) {
           s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
           setGunLevel(s.gunLevel);
-          spawnBurst(s.particles, s.powerup.x, s.powerup.y, "#ffdc80", 16, "score");
+          spawnBurst(
+            s.particles,
+            s.powerup.x,
+            s.powerup.y,
+            "#ffdc80",
+            16,
+            "score",
+          );
           AudioEngine.playSfx("win");
           s.powerup = null;
         }
@@ -5184,8 +5256,8 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Your gun fires automatically — just dodge with the arrows. Grab the
-        gold pickups to power up your gun.
+        Your gun fires automatically — just dodge with the arrows. Grab the gold
+        pickups to power up your gun.
       </p>
     </div>
   );
@@ -5205,7 +5277,13 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const BULLET_SPEED = 5.6;
   const GUN_LEVELS = [
     { cooldown: 200, shots: [{ dy: 0, angle: 0 }] },
-    { cooldown: 175, shots: [{ dy: -5, angle: 0 }, { dy: 5, angle: 0 }] },
+    {
+      cooldown: 175,
+      shots: [
+        { dy: -5, angle: 0 },
+        { dy: 5, angle: 0 },
+      ],
+    },
     {
       cooldown: 150,
       shots: [
@@ -5400,7 +5478,14 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
         ) {
           s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
           setGunLevel(s.gunLevel);
-          spawnBurst(s.particles, s.powerup.x, s.powerup.y, "#ffdc80", 16, "score");
+          spawnBurst(
+            s.particles,
+            s.powerup.x,
+            s.powerup.y,
+            "#ffdc80",
+            16,
+            "score",
+          );
           AudioEngine.playSfx("win");
           s.powerup = null;
         }
@@ -5596,6 +5681,7 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
   });
   const [climbs, setClimbs] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [level, setLevel] = useState(1);
   const [over, setOver] = useState(null);
   const [shake, setShake] = useState(false);
 
@@ -5609,6 +5695,9 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
       particles: [],
       lives: startLives,
       climbs: 0,
+      level: 1,
+      spawnMsCur: spawnMs,
+      barrelSpeedCur: barrelSpeed,
       spawnTimer: 400,
       ended: false,
     };
@@ -5617,6 +5706,7 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setClimbs(0);
     setLives(startLives);
+    setLevel(1);
     setOver(null);
     setShake(false);
   }
@@ -5685,19 +5775,25 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
             }
             p.row = p.targetRow;
             if (p.row === TOP_ROW) {
-              s.ended = true;
-              setOver("win");
+              s.level += 1;
+              setLevel(s.level);
+              AudioEngine.playSfx("win");
+              s.barrelSpeedCur += 0.3;
+              s.spawnMsCur = Math.max(280, s.spawnMsCur - 150);
+              s.player = freshPlayer();
+              s.barrels = [];
+              s.spawnTimer = 400;
             }
           }
         }
         s.spawnTimer -= 16;
         if (s.spawnTimer <= 0) {
-          s.spawnTimer = spawnMs;
+          s.spawnTimer = s.spawnMsCur;
           s.barrels.push({
             row: TOP_ROW,
             x: 4,
             y: ROWS_Y[TOP_ROW],
-            vx: barrelSpeed,
+            vx: s.barrelSpeedCur,
           });
         }
         s.barrels.forEach((b) => {
@@ -5795,6 +5891,7 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Climbs: {climbs}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Level: {level}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -5802,12 +5899,12 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
       </div>
       {over && (
         <Overlay
-          emoji={over === "win" ? "🦍" : "🛢️"}
-          title={over === "win" ? "Reached the top!" : "Flattened!"}
-          statLines={[`Ladders climbed: ${climbs}`]}
+          emoji="🛢️"
+          title="Flattened!"
+          statLines={[`Ladders climbed: ${climbs}`, `Level reached: ${level}`]}
           onRestart={reset}
           onExit={goHome}
-          sound={over === "win" ? "win" : "lose"}
+          sound="lose"
         />
       )}
       <div className="ga-dpad">
@@ -5875,8 +5972,8 @@ function BarrelClimbGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </div>
       </div>
       <p className="ga-hint">
-        Walk to a ladder and hold ↑/↓ to climb. Dodge the barrels, reach the
-        top.
+        Walk to a ladder and hold ↑/↓ to climb. Reach the top to advance —
+        barrels get faster and more frequent each level.
       </p>
     </div>
   );
@@ -5914,19 +6011,20 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const fireQueuedRef = useRef(false);
   const [popped, setPopped] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [level, setLevel] = useState(1);
   const [over, setOver] = useState(null);
   const [shake, setShake] = useState(false);
 
-  function freshEnemies() {
+  function freshEnemies(count, speedMul) {
     const arr = [];
-    for (let i = 0; i < enemyCount; i++) {
+    for (let i = 0; i < count; i++) {
       const plat = PLATFORMS[i % PLATFORMS.length];
       arr.push({
         x: plat.x + 10 + ((i * 17) % Math.max(20, plat.w - 20)),
         y: plat.y - 14,
         w: 14,
         h: 14,
-        vx: (i % 2 === 0 ? 1 : -1) * (0.6 + (i % 3) * 0.2) * enemySpeedMul,
+        vx: (i % 2 === 0 ? 1 : -1) * (0.6 + (i % 3) * 0.2) * speedMul,
         platIdx: i % PLATFORMS.length,
         alive: true,
       });
@@ -5943,11 +6041,14 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
         grounded: false,
         facing: 1,
       },
-      enemies: freshEnemies(),
+      enemyCountCur: enemyCount,
+      enemySpeedCur: enemySpeedMul,
+      enemies: freshEnemies(enemyCount, enemySpeedMul),
       bubbles: [],
       particles: [],
       lives: startLives,
       popped: 0,
+      level: 1,
       ended: false,
     };
   }
@@ -5955,6 +6056,7 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setPopped(0);
     setLives(startLives);
+    setLevel(1);
     setOver(null);
     setShake(false);
   }
@@ -6067,8 +6169,17 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
           if (e.alive && rectsOverlap(pr, e)) hit(s);
         });
         if (s.enemies.every((e) => !e.alive)) {
-          s.ended = true;
-          setOver("win");
+          s.level += 1;
+          setLevel(s.level);
+          AudioEngine.playSfx("win");
+          s.enemyCountCur += 1;
+          s.enemySpeedCur += 0.12;
+          s.enemies = freshEnemies(s.enemyCountCur, s.enemySpeedCur);
+          s.bubbles = [];
+          p.x = 20;
+          p.y = GROUND_Y - PLAYER_H;
+          p.vx = 0;
+          p.vy = 0;
         }
       }
       const s2 = stateRef.current;
@@ -6146,6 +6257,7 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Popped: {popped}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Level: {level}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -6153,12 +6265,12 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
       </div>
       {over && (
         <Overlay
-          emoji={over === "win" ? "🫧" : "💥"}
-          title={over === "win" ? "Level cleared!" : "Out of lives"}
-          statLines={[`Enemies popped: ${popped}`]}
+          emoji="💥"
+          title="Out of lives"
+          statLines={[`Enemies popped: ${popped}`, `Level reached: ${level}`]}
           onRestart={reset}
           onExit={goHome}
-          sound={over === "win" ? "win" : "lose"}
+          sound="lose"
         />
       )}
       <div className="ga-dpad-row">
@@ -6212,8 +6324,8 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Arrows to move/jump, Space to blow bubbles. Pop every enemy to clear
-        the level.
+        Arrows to move/jump, Space to blow bubbles. Clear a level to advance —
+        more enemies join each round until you're out of lives.
       </p>
     </div>
   );
@@ -6249,6 +6361,7 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
   });
   const [roundsWon, setRoundsWon] = useState(0);
   const [roundsLost, setRoundsLost] = useState(0);
+  const [matchWins, setMatchWins] = useState(0);
   const [over, setOver] = useState(null);
   const [shake, setShake] = useState(false);
 
@@ -6270,6 +6383,9 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
       particles: [],
       roundsWon: 0,
       roundsLost: 0,
+      matchWins: 0,
+      cpuSpeedMulCur: cpuSpeedMul,
+      cpuAggroCur: cpuAggro,
       ended: false,
       roundOverAt: 0,
     };
@@ -6278,6 +6394,7 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setRoundsWon(0);
     setRoundsLost(0);
+    setMatchWins(0);
     setOver(null);
     setShake(false);
   }
@@ -6299,8 +6416,7 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
         p.facing = dist >= 0 ? 1 : -1;
         c.facing = dist >= 0 ? -1 : 1;
         if (keysRef.current.left) p.x = Math.max(0, p.x - 2.4);
-        if (keysRef.current.right)
-          p.x = Math.min(W - FIGHTER_W, p.x + 2.4);
+        if (keysRef.current.right) p.x = Math.min(W - FIGHTER_W, p.x + 2.4);
         p.atkCd = Math.max(0, p.atkCd - 16);
         c.atkCd = Math.max(0, c.atkCd - 16);
         p.hitFlash = Math.max(0, p.hitFlash - 16);
@@ -6334,9 +6450,9 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
 
         const absDist = Math.abs(dist);
         if (absDist > 30) {
-          c.x += Math.sign(dist) * 1.6 * cpuSpeedMul;
+          c.x += Math.sign(dist) * 1.6 * s.cpuSpeedMulCur;
           c.x = Math.max(0, Math.min(W - FIGHTER_W, c.x));
-        } else if (Math.random() < cpuAggro) {
+        } else if (Math.random() < s.cpuAggroCur) {
           const usePunch = Math.random() < 0.5;
           tryAttack(
             c,
@@ -6360,8 +6476,17 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
       } else if (s.roundOverAt) {
         if (performance.now() - s.roundOverAt > 900) {
           if (s.roundsWon >= 2) {
-            s.ended = true;
-            setOver("win");
+            s.matchWins += 1;
+            setMatchWins(s.matchWins);
+            AudioEngine.playSfx("win");
+            s.roundsWon = 0;
+            s.roundsLost = 0;
+            setRoundsWon(0);
+            setRoundsLost(0);
+            s.cpuSpeedMulCur += 0.15;
+            s.cpuAggroCur += 0.004;
+            s.roundOverAt = 0;
+            nextRound(s);
           } else if (s.roundsLost >= 2) {
             s.ended = true;
             setOver("lose");
@@ -6431,7 +6556,7 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
   }, []);
 
   useEffect(() => {
-    if (over) onFinish(roundsWon);
+    if (over) onFinish(matchWins);
     // eslint-disable-next-line
   }, [over]);
 
@@ -6445,6 +6570,7 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <span>
           Rounds: {roundsWon}-{roundsLost}
         </span>
+        <span>Matches won: {matchWins}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -6452,12 +6578,12 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
       </div>
       {over && (
         <Overlay
-          emoji={over === "win" ? "🥇" : "🥊"}
-          title={over === "win" ? "Match won!" : "Match lost"}
-          statLines={[`Rounds: ${roundsWon}-${roundsLost}`]}
+          emoji="🥊"
+          title="Match lost"
+          statLines={[`Matches won: ${matchWins}`]}
           onRestart={reset}
           onExit={goHome}
-          sound={over === "win" ? "win" : "lose"}
+          sound="lose"
         />
       )}
       <div className="ga-dpad-row">
@@ -6521,7 +6647,8 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Arrows to move, J to punch, K to kick. Win 2 rounds to take the match.
+        Arrows to move, J to punch, K to kick. Win 2 rounds to take the match —
+        the next opponent hits harder, keep winning until you lose one.
       </p>
     </div>
   );
@@ -6575,7 +6702,11 @@ function PeakClimberGame({ onFinish, best, goHome, difficulty = "medium" }) {
   function freshState() {
     const plats = freshPlatforms();
     return {
-      player: { x: W / 2 - PLAYER_W / 2, y: plats[0].y - PLAYER_H, vy: JUMP_VELOCITY },
+      player: {
+        x: W / 2 - PLAYER_W / 2,
+        y: plats[0].y - PLAYER_H,
+        vy: JUMP_VELOCITY,
+      },
       platforms: plats,
       camY: 0,
       particles: [],
@@ -6777,8 +6908,8 @@ function PeakClimberGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Auto-bounces upward. Steer left/right, dodge the ice critters, climb
-        as high as you can.
+        Auto-bounces upward. Steer left/right, dodge the ice critters, climb as
+        high as you can.
       </p>
     </div>
   );
@@ -6929,7 +7060,14 @@ function NineHoleGame({ onFinish, best, goHome, difficulty = "medium" }) {
           }
           const dh = Math.hypot(b.x - cfg.hole.x, b.y - cfg.hole.y);
           if (dh < holeR && Math.hypot(b.vx, b.vy) < 2.2) {
-            spawnBurst(s.particles, cfg.hole.x, cfg.hole.y, "#ffdc80", 16, "score");
+            spawnBurst(
+              s.particles,
+              cfg.hole.x,
+              cfg.hole.y,
+              "#ffdc80",
+              16,
+              "score",
+            );
             AudioEngine.playSfx("win");
             if (s.holeIdx + 1 >= HOLES.length) {
               s.ended = true;
@@ -7455,10 +7593,20 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
             }
           }
         }
-        if (s.powerup && Math.hypot(s.powerup.x - sh.x, s.powerup.y - sh.y) < 16) {
+        if (
+          s.powerup &&
+          Math.hypot(s.powerup.x - sh.x, s.powerup.y - sh.y) < 16
+        ) {
           s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
           setGunLevel(s.gunLevel);
-          spawnBurst(s.particles, s.powerup.x, s.powerup.y, "#ffdc80", 16, "score");
+          spawnBurst(
+            s.particles,
+            s.powerup.x,
+            s.powerup.y,
+            "#ffdc80",
+            16,
+            "score",
+          );
           AudioEngine.playSfx("win");
           s.powerup = null;
         }
@@ -7624,8 +7772,8 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Rotate and thrust to steer — your gun fires automatically. Grab the
-        gold pickups to power it up. Rocks split when hit.
+        Rotate and thrust to steer — your gun fires automatically. Grab the gold
+        pickups to power it up. Rocks split when hit.
       </p>
     </div>
   );
@@ -7684,23 +7832,60 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const stateRef = useRef(null);
   const [kills, setKills] = useState(0);
   const [lives, setLives] = useState(startLives);
+  const [level, setLevel] = useState(1);
   const [over, setOver] = useState(null);
   const [shake, setShake] = useState(false);
 
+  const ENEMY_SPOTS = [
+    { r: 0, c: COLS - 1 },
+    { r: ROWS - 1, c: 0 },
+    { r: ROWS - 1, c: COLS - 1 },
+    { r: Math.floor(ROWS / 2), c: Math.floor(COLS / 2) },
+  ];
+  function randomOpenCell(grid, taken) {
+    let r,
+      c,
+      guard = 0;
+    do {
+      r = Math.floor(Math.random() * ROWS);
+      c = Math.floor(Math.random() * COLS);
+      guard += 1;
+    } while (
+      guard < 200 &&
+      (grid[r][c] !== 0 || (r === 0 && c === 0) || taken.has(r + "," + c))
+    );
+    return { r, c };
+  }
+  function buildEnemies(count, grid) {
+    const spots = [];
+    const taken = new Set();
+    for (let i = 0; i < count; i++) {
+      const spot =
+        i < ENEMY_SPOTS.length ? ENEMY_SPOTS[i] : randomOpenCell(grid, taken);
+      taken.add(spot.r + "," + spot.c);
+      spots.push(spot);
+    }
+    return spots.map((spot) => ({
+      r: spot.r,
+      c: spot.c,
+      timer: 0,
+      alive: true,
+    }));
+  }
   function freshState() {
+    const grid = buildGrid();
     return {
-      grid: buildGrid(),
+      grid,
       player: { r: 0, c: 0 },
-      enemies: [
-        { r: 0, c: COLS - 1, timer: 0, alive: true },
-        { r: ROWS - 1, c: 0, timer: 0, alive: true },
-        { r: ROWS - 1, c: COLS - 1, timer: 0, alive: true },
-      ],
+      enemies: buildEnemies(3, grid),
+      enemyCountCur: 3,
+      enemyMsCur: enemyMs,
       bombs: [],
       flames: [],
       particles: [],
       lives: startLives,
       kills: 0,
+      level: 1,
       hitCooldown: 0,
       ended: false,
     };
@@ -7709,6 +7894,7 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
     stateRef.current = freshState();
     setKills(0);
     setLives(startLives);
+    setLevel(1);
     setOver(null);
     setShake(false);
   }
@@ -7721,9 +7907,7 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
   function move(dir) {
     const s = stateRef.current;
     if (!s || s.ended) return;
-    const d = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] }[
-      dir
-    ];
+    const d = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] }[dir];
     const nr = s.player.r + d[0],
       nc = s.player.c + d[1];
     if (passable(s, nr, nc)) {
@@ -7814,7 +7998,7 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
           if (!e.alive) return;
           e.timer -= dt;
           if (e.timer <= 0) {
-            e.timer = enemyMs;
+            e.timer = s.enemyMsCur;
             const dirs = [
               [-1, 0],
               [1, 0],
@@ -7830,8 +8014,19 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
           if (e.r === s.player.r && e.c === s.player.c) hitPlayer(s);
         });
         if (s.enemies.every((e) => !e.alive)) {
-          s.ended = true;
-          setOver("win");
+          s.level += 1;
+          setLevel(s.level);
+          AudioEngine.playSfx("win");
+          s.grid = buildGrid();
+          if (s.level % 2 === 0) s.enemyCountCur += 1;
+          s.enemyMsCur = Math.max(160, s.enemyMsCur - 30);
+          ENEMY_SPOTS.forEach((spot) => {
+            if (s.grid[spot.r][spot.c] !== 1) s.grid[spot.r][spot.c] = 0;
+          });
+          s.enemies = buildEnemies(s.enemyCountCur, s.grid);
+          s.bombs = [];
+          s.flames = [];
+          s.player = { r: 0, c: 0 };
         }
       }
       const ctx = canvasRef.current.getContext("2d");
@@ -7921,6 +8116,7 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
       <div className="ga-hud">
         <span>Kills: {kills}</span>
         <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Level: {level}</span>
         <span>Best: {best ?? 0}</span>
       </div>
       <div className={`ga-canvas-wrap ${shake ? "ga-shake" : ""}`}>
@@ -7928,12 +8124,12 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
       </div>
       {over && (
         <Overlay
-          emoji={over === "win" ? "💣" : "💥"}
-          title={over === "win" ? "Arena cleared!" : "Caught in the blast"}
-          statLines={[`Enemies destroyed: ${kills}`]}
+          emoji="💥"
+          title="Caught in the blast"
+          statLines={[`Enemies destroyed: ${kills}`, `Level reached: ${level}`]}
           onRestart={reset}
           onExit={goHome}
-          sound={over === "win" ? "win" : "lose"}
+          sound="lose"
         />
       )}
       <div className="ga-dpad">
@@ -7948,8 +8144,8 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <button onClick={placeBomb}>💣 Bomb</button>
       </div>
       <p className="ga-hint">
-        Arrows to move, Space or Bomb to drop one. Blast walls and enemies,
-        don't get caught in your own fire.
+        Arrows to move, Space or Bomb to drop one. Clear an arena to advance —
+        new enemies join and move faster each level.
       </p>
     </div>
   );
@@ -8260,10 +8456,10 @@ function AirHockeyGame({ onFinish, best, goHome, difficulty = "medium" }) {
 /* --------------------------- challenge: missile defense --------------------------- */
 
 function MissileDefenseGame({ onFinish, best, goHome, difficulty = "medium" }) {
-  const { missileSpeedMul, wavesToWin } = {
-    easy: { missileSpeedMul: 0.8, wavesToWin: 4 },
-    medium: { missileSpeedMul: 1, wavesToWin: 5 },
-    hard: { missileSpeedMul: 1.3, wavesToWin: 6 },
+  const { missileSpeedMul } = {
+    easy: { missileSpeedMul: 0.8 },
+    medium: { missileSpeedMul: 1 },
+    hard: { missileSpeedMul: 1.3 },
   }[difficulty];
   const W = 280,
     H = 260;
@@ -8396,16 +8592,11 @@ function MissileDefenseGame({ onFinish, best, goHome, difficulty = "medium" }) {
           s.ended = true;
           setOver("lose");
         } else if (s.spawned >= s.missilesThisWave && s.missiles.length === 0) {
-          if (s.wave >= wavesToWin) {
-            s.ended = true;
-            setOver("win");
-          } else {
-            s.wave += 1;
-            setWave(s.wave);
-            s.missilesThisWave += 2;
-            s.spawned = 0;
-            s.spawnTimer = 900;
-          }
+          s.wave += 1;
+          setWave(s.wave);
+          s.missilesThisWave += 2;
+          s.spawned = 0;
+          s.spawnTimer = 900;
         }
       }
       const s2 = stateRef.current;
@@ -8466,9 +8657,7 @@ function MissileDefenseGame({ onFinish, best, goHome, difficulty = "medium" }) {
   return (
     <div className="ga-game-col">
       <div className="ga-hud">
-        <span>
-          Wave: {wave}/{wavesToWin}
-        </span>
+        <span>Wave: {wave}</span>
         <span>Cities: {citiesLeft}</span>
         <span>Score: {score}</span>
       </div>
@@ -8484,17 +8673,17 @@ function MissileDefenseGame({ onFinish, best, goHome, difficulty = "medium" }) {
       </div>
       {over && (
         <Overlay
-          emoji={over === "win" ? "🛡️" : "🏚️"}
-          title={over === "win" ? "Skies cleared!" : "Cities lost"}
-          statLines={[`Score: ${score}`]}
+          emoji="🏚️"
+          title="Cities lost"
+          statLines={[`Score: ${score}`, `Waves survived: ${wave}`]}
           onRestart={reset}
           onExit={goHome}
-          sound={over === "win" ? "win" : "lose"}
+          sound="lose"
         />
       )}
       <p className="ga-hint">
-        Tap/click anywhere to fire an interceptor. Protect your cities
-        through {wavesToWin} waves.
+        Tap/click anywhere to fire an interceptor. Waves keep coming and get
+        tougher — protect your cities as long as you can.
       </p>
     </div>
   );
@@ -8779,7 +8968,9 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
         });
       });
       ctx.fillStyle = "#ffdc80";
-      s2.bullets.forEach((b) => ctx.fillRect(b.c * CELL + CELL / 2 - 2, b.y, 4, 8));
+      s2.bullets.forEach((b) =>
+        ctx.fillRect(b.c * CELL + CELL / 2 - 2, b.y, 4, 8),
+      );
       if (s2.powerup) {
         ctx.fillStyle = "#ffdc80";
         ctx.beginPath();
@@ -8968,7 +9159,9 @@ function BubblePopGame({ onFinish, best, goHome, difficulty = "medium" }) {
       const row = [];
       for (let c = 0; c < COLS; c++) {
         row.push(
-          r < initialRows ? Math.floor(Math.random() * BUBBLE_COLORS.length) : null,
+          r < initialRows
+            ? Math.floor(Math.random() * BUBBLE_COLORS.length)
+            : null,
         );
       }
       grid.push(row);
@@ -9138,7 +9331,13 @@ function BubblePopGame({ onFinish, best, goHome, difficulty = "medium" }) {
       ctx.stroke();
       ctx.fillStyle = BUBBLE_COLORS[s.nextColor];
       ctx.beginPath();
-      ctx.arc(s.column * CELL + CELL / 2, ROWS * CELL + 18, CELL / 2 - 2, 0, Math.PI * 2);
+      ctx.arc(
+        s.column * CELL + CELL / 2,
+        ROWS * CELL + 18,
+        CELL / 2 - 2,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
       updateAndDrawParticles(ctx, s.particles);
       rafRef.current = requestAnimationFrame(loop);
@@ -9460,8 +9659,8 @@ function TenPinAlleyGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <button onClick={() => aim(1)}>→</button>
       </div>
       <p className="ga-hint">
-        Aim left/right, hold Bowl to charge power, release to roll. 10
-        frames, knock 'em all down.
+        Aim left/right, hold Bowl to charge power, release to roll. 10 frames,
+        knock 'em all down.
       </p>
     </div>
   );
@@ -9623,7 +9822,11 @@ function ConnectFourGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <Overlay
           emoji={result === "win" ? "🏆" : result === "lose" ? "🤖" : "🤝"}
           title={
-            result === "win" ? "You win!" : result === "lose" ? "CPU wins" : "Draw"
+            result === "win"
+              ? "You win!"
+              : result === "lose"
+                ? "CPU wins"
+                : "Draw"
           }
           statLines={[`Round wins this session: ${wins}`]}
           onRestart={reset}
@@ -9810,7 +10013,8 @@ function CheckersGame({ onFinish, best, goHome }) {
     dirsFor(piece).forEach(([dr, dc]) => {
       const nr = r + dr,
         nc = c + dc;
-      if (inBounds(nr, nc) && !board[idx(nr, nc)]) simple.push({ r: nr, c: nc });
+      if (inBounds(nr, nc) && !board[idx(nr, nc)])
+        simple.push({ r: nr, c: nc });
       const jr = r + dr * 2,
         jc = c + dc * 2;
       if (
@@ -10003,7 +10207,9 @@ function CheckersGame({ onFinish, best, goHome }) {
               {piece && (
                 <span
                   className="ga-checkers-piece"
-                  style={{ background: piece.owner === "P" ? "#78efd9" : "#ff9696" }}
+                  style={{
+                    background: piece.owner === "P" ? "#78efd9" : "#ff9696",
+                  }}
                 >
                   {piece.king ? "♛" : ""}
                 </span>
@@ -10107,7 +10313,9 @@ function SolitaireGame({ onFinish, best, goHome }) {
   }
   function canStack(target, card) {
     if (!target) return card.rank === 13;
-    return isRed(target.suit) !== isRed(card.suit) && target.rank === card.rank + 1;
+    return (
+      isRed(target.suit) !== isRed(card.suit) && target.rank === card.rank + 1
+    );
   }
   function canFoundation(foundationPile, card) {
     if (foundationPile.length === 0) return card.rank === 1;
@@ -10186,7 +10394,10 @@ function SolitaireGame({ onFinish, best, goHome }) {
   }
 
   useEffect(() => {
-    const total = Object.values(game.foundations).reduce((a, p) => a + p.length, 0);
+    const total = Object.values(game.foundations).reduce(
+      (a, p) => a + p.length,
+      0,
+    );
     if (total === 52 && !over) {
       setOver(true);
       onFinish(moves);
@@ -10248,7 +10459,11 @@ function SolitaireGame({ onFinish, best, goHome }) {
       </div>
       <div className="ga-solitaire-tableau">
         {game.tableau.map((pile, col) => (
-          <div key={col} className="ga-solitaire-col" onClick={() => clickTableau(col)}>
+          <div
+            key={col}
+            className="ga-solitaire-col"
+            onClick={() => clickTableau(col)}
+          >
             {pile.map((card, i) => (
               <span
                 key={card.id}
@@ -10326,11 +10541,19 @@ function scoreYzCategory(cat, dice) {
   const counts = [0, 0, 0, 0, 0, 0, 0];
   dice.forEach((d) => (counts[d] += 1));
   const sum = dice.reduce((a, b) => a + b, 0);
-  const numberCats = { ones: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
+  const numberCats = {
+    ones: 1,
+    twos: 2,
+    threes: 3,
+    fours: 4,
+    fives: 5,
+    sixes: 6,
+  };
   if (numberCats[cat]) return counts[numberCats[cat]] * numberCats[cat];
   if (cat === "threeKind") return counts.some((c) => c >= 3) ? sum : 0;
   if (cat === "fourKind") return counts.some((c) => c >= 4) ? sum : 0;
-  if (cat === "fullHouse") return counts.includes(3) && counts.includes(2) ? 25 : 0;
+  if (cat === "fullHouse")
+    return counts.includes(3) && counts.includes(2) ? 25 : 0;
   if (cat === "smallStraight") {
     const has = (arr) => arr.every((n) => counts[n] > 0);
     return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 30 : 0;
@@ -10368,7 +10591,9 @@ function YahtzeeGame({ onFinish, best, goHome }) {
     AudioEngine.playSfx("select");
     setGame((g) => ({
       ...g,
-      dice: g.dice.map((d, i) => (g.held[i] ? d : 1 + Math.floor(Math.random() * 6))),
+      dice: g.dice.map((d, i) =>
+        g.held[i] ? d : 1 + Math.floor(Math.random() * 6),
+      ),
       rollsLeft: g.rollsLeft - 1,
     }));
   }
@@ -10388,12 +10613,17 @@ function YahtzeeGame({ onFinish, best, goHome }) {
       const scores = { ...g.scores, [cat]: val };
       const round = g.round + 1;
       if (round > 13) {
-        const upperSum = ["ones", "twos", "threes", "fours", "fives", "sixes"].reduce(
-          (a, c) => a + (scores[c] || 0),
-          0,
-        );
+        const upperSum = [
+          "ones",
+          "twos",
+          "threes",
+          "fours",
+          "fives",
+          "sixes",
+        ].reduce((a, c) => a + (scores[c] || 0), 0);
         const bonus = upperSum >= 63 ? 35 : 0;
-        const finalTotal = Object.values(scores).reduce((a, b) => a + b, 0) + bonus;
+        const finalTotal =
+          Object.values(scores).reduce((a, b) => a + b, 0) + bonus;
         setTotal(finalTotal);
         setOver(true);
         onFinish(finalTotal);
@@ -10465,8 +10695,8 @@ function YahtzeeGame({ onFinish, best, goHome }) {
         />
       )}
       <p className="ga-hint">
-        Roll up to 3 times, tap dice to hold them, then lock in a category.
-        Fill all 13 rounds.
+        Roll up to 3 times, tap dice to hold them, then lock in a category. Fill
+        all 13 rounds.
       </p>
     </div>
   );
@@ -10651,7 +10881,8 @@ function RallySprintGame({ onFinish, best, goHome, difficulty = "medium" }) {
       if (["ArrowRight", "d", "D"].includes(e.key))
         keysRef.current.right = false;
       if (["ArrowUp", "w", "W"].includes(e.key)) keysRef.current.thrust = false;
-      if (["ArrowDown", "s", "S"].includes(e.key)) keysRef.current.brake = false;
+      if (["ArrowDown", "s", "S"].includes(e.key))
+        keysRef.current.brake = false;
     }
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -10764,11 +10995,56 @@ function RallySprintGame({ onFinish, best, goHome, difficulty = "medium" }) {
 /* --------------------------- challenge: word guess (wordle style) --------------------------- */
 
 const WG_WORDS = [
-  "APPLE","BRAVE","CRANE","DELTA","EAGLE","FROST","GRAPE","HOUSE","IVORY","JOLLY",
-  "KNIFE","LEMON","MANGO","NOBLE","OCEAN","PLANT","QUIET","RIVER","STONE","TIGER",
-  "UNION","VIVID","WHEAT","XENON","YIELD","ZEBRA","AMBER","BLOOM","CLOUD","DRIFT",
-  "EMBER","FLAME","GHOST","HONEY","INPUT","JUMBO","KARMA","LUNAR","MAPLE","NORTH",
-  "OASIS","PEARL","QUEST","ROBIN","SOLAR","TRACE","URBAN","VOICE","WITTY","CHESS",
+  "APPLE",
+  "BRAVE",
+  "CRANE",
+  "DELTA",
+  "EAGLE",
+  "FROST",
+  "GRAPE",
+  "HOUSE",
+  "IVORY",
+  "JOLLY",
+  "KNIFE",
+  "LEMON",
+  "MANGO",
+  "NOBLE",
+  "OCEAN",
+  "PLANT",
+  "QUIET",
+  "RIVER",
+  "STONE",
+  "TIGER",
+  "UNION",
+  "VIVID",
+  "WHEAT",
+  "XENON",
+  "YIELD",
+  "ZEBRA",
+  "AMBER",
+  "BLOOM",
+  "CLOUD",
+  "DRIFT",
+  "EMBER",
+  "FLAME",
+  "GHOST",
+  "HONEY",
+  "INPUT",
+  "JUMBO",
+  "KARMA",
+  "LUNAR",
+  "MAPLE",
+  "NORTH",
+  "OASIS",
+  "PEARL",
+  "QUEST",
+  "ROBIN",
+  "SOLAR",
+  "TRACE",
+  "URBAN",
+  "VOICE",
+  "WITTY",
+  "CHESS",
 ];
 const WG_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -10814,12 +11090,16 @@ function WordGuessGame({ onFinish, best, goHome }) {
     setGame((g) => {
       if (g.current.length !== 5 || over) return g;
       const feedback = computeFeedback(g.current, g.target);
-      const guesses = [...g.guesses, { letters: g.current.split(""), feedback }];
+      const guesses = [
+        ...g.guesses,
+        { letters: g.current.split(""), feedback },
+      ];
       const letterStatus = { ...g.letterStatus };
       g.current.split("").forEach((letter, i) => {
         const rank = { absent: 0, present: 1, correct: 2 };
         const cur = letterStatus[letter];
-        if (!cur || rank[feedback[i]] > rank[cur]) letterStatus[letter] = feedback[i];
+        if (!cur || rank[feedback[i]] > rank[cur])
+          letterStatus[letter] = feedback[i];
       });
       AudioEngine.playSfx("click");
       if (g.current === g.target) {
@@ -10847,7 +11127,8 @@ function WordGuessGame({ onFinish, best, goHome }) {
         return g;
       }
       if (k === "BACK") return { ...g, current: g.current.slice(0, -1) };
-      if (g.current.length < 5 && /^[A-Z]$/.test(k)) return { ...g, current: g.current + k };
+      if (g.current.length < 5 && /^[A-Z]$/.test(k))
+        return { ...g, current: g.current + k };
       return g;
     });
   }
@@ -10871,7 +11152,11 @@ function WordGuessGame({ onFinish, best, goHome }) {
     // eslint-disable-next-line
   }, [game, over]);
 
-  const colorFor = { correct: "#78efd9", present: "#ffdc80", absent: "#3d3d5c" };
+  const colorFor = {
+    correct: "#78efd9",
+    present: "#ffdc80",
+    absent: "#3d3d5c",
+  };
 
   return (
     <div className="ga-game-col">
@@ -10894,7 +11179,9 @@ function WordGuessGame({ onFinish, best, goHome }) {
                   key={c}
                   className="ga-wg-cell"
                   style={{
-                    background: guess ? colorFor[guess.feedback[c]] : "transparent",
+                    background: guess
+                      ? colorFor[guess.feedback[c]]
+                      : "transparent",
                     color: guess ? "#1c1c2e" : "#f5f3ff",
                   }}
                 >
@@ -10910,7 +11197,9 @@ function WordGuessGame({ onFinish, best, goHome }) {
           emoji={over === "win" ? "🟩" : "🟥"}
           title={over === "win" ? "Solved it!" : `The word was ${game.target}`}
           statLines={[
-            over === "win" ? `Guesses used: ${game.guesses.length}` : "Better luck next time",
+            over === "win"
+              ? `Guesses used: ${game.guesses.length}`
+              : "Better luck next time",
           ]}
           onRestart={reset}
           onExit={goHome}
@@ -10930,7 +11219,9 @@ function WordGuessGame({ onFinish, best, goHome }) {
                 key={k}
                 className="ga-wg-key"
                 style={{
-                  background: game.letterStatus[k] ? colorFor[game.letterStatus[k]] : undefined,
+                  background: game.letterStatus[k]
+                    ? colorFor[game.letterStatus[k]]
+                    : undefined,
                 }}
                 onClick={() => pressKey(k)}
               >
@@ -11041,8 +11332,8 @@ function SlideFifteenGame({ onFinish, best, goHome }) {
         />
       )}
       <p className="ga-hint">
-        Tap a tile next to the blank space to slide it. Arrange 1 through 15
-        in order.
+        Tap a tile next to the blank space to slide it. Arrange 1 through 15 in
+        order.
       </p>
     </div>
   );
@@ -11351,7 +11642,14 @@ function TowerStackGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <span>Height: {score}</span>
         <span>Best: {best ?? 0}</span>
       </div>
-      <div className="ga-canvas-wrap" onMouseDown={drop} onTouchStart={(e) => { e.preventDefault(); drop(); }}>
+      <div
+        className="ga-canvas-wrap"
+        onMouseDown={drop}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          drop();
+        }}
+      >
         <canvas ref={canvasRef} width={W} height={H} className="ga-canvas" />
       </div>
       {over && (
@@ -11365,8 +11663,8 @@ function TowerStackGame({ onFinish, best, goHome, difficulty = "medium" }) {
         />
       )}
       <p className="ga-hint">
-        Tap, click, or press Space to drop the block. Line it up with the
-        block below to keep the tower growing.
+        Tap, click, or press Space to drop the block. Line it up with the block
+        below to keep the tower growing.
       </p>
     </div>
   );
@@ -11404,7 +11702,14 @@ function SkyHoopsGame({ onFinish, best, goHome, difficulty = "medium" }) {
   function freshState() {
     return {
       hoop: randomHoop(),
-      ball: { x: START_X, y: START_Y, vx: 0, vy: 0, flying: false, scored: false },
+      ball: {
+        x: START_X,
+        y: START_Y,
+        vx: 0,
+        vy: 0,
+        flying: false,
+        scored: false,
+      },
       power: 0,
       powerDir: 1,
       charging: false,
@@ -11486,7 +11791,14 @@ function SkyHoopsGame({ onFinish, best, goHome, difficulty = "medium" }) {
               setOver(true);
             } else {
               s.hoop = randomHoop();
-              s.ball = { x: START_X, y: START_Y, vx: 0, vy: 0, flying: false, scored: false };
+              s.ball = {
+                x: START_X,
+                y: START_Y,
+                vx: 0,
+                vy: 0,
+                flying: false,
+                scored: false,
+              };
             }
           }
         }
@@ -11572,8 +11884,8 @@ function SkyHoopsGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Hold to charge your shot, release to shoot. The hoop moves after
-        every attempt — {totalShots} shots total.
+        Hold to charge your shot, release to shoot. The hoop moves after every
+        attempt — {totalShots} shots total.
       </p>
     </div>
   );
@@ -11660,7 +11972,14 @@ function DartThrowGame({ onFinish, best, goHome, difficulty = "medium" }) {
     s.total += pts;
     setTotal(s.total);
     s.darts.push({ x: CX + dx, y: CY + dy });
-    spawnBurst(s.particles, CX + dx, CY + dy, pts > 0 ? "#ffdc80" : "#a8a6c8", 8, pts > 0 ? "score" : null);
+    spawnBurst(
+      s.particles,
+      CX + dx,
+      CY + dy,
+      pts > 0 ? "#ffdc80" : "#a8a6c8",
+      8,
+      pts > 0 ? "score" : null,
+    );
     AudioEngine.playSfx(pts >= 25 ? "win" : "click");
     s.throwsTaken += 1;
     setThrowsTaken(s.throwsTaken);
@@ -11819,8 +12138,8 @@ function DartThrowGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Move the reticle, hold to charge steadiness, release near full for
-        the most accurate throw. {TOTAL_THROWS} darts total.
+        Move the reticle, hold to charge steadiness, release near full for the
+        most accurate throw. {TOTAL_THROWS} darts total.
       </p>
     </div>
   );
@@ -11935,7 +12254,12 @@ function SlalomSkiGame({ onFinish, best, goHome, difficulty = "medium" }) {
         }
       });
       ctx.fillStyle = "#242643";
-      ctx.fillRect(s2.skierX - SKIER_W / 2, SKIER_Y - SKIER_H / 2, SKIER_W, SKIER_H);
+      ctx.fillRect(
+        s2.skierX - SKIER_W / 2,
+        SKIER_Y - SKIER_H / 2,
+        SKIER_W,
+        SKIER_H,
+      );
       updateAndDrawParticles(ctx, s2.particles);
       rafRef.current = requestAnimationFrame(loop);
     }
@@ -12080,7 +12404,11 @@ function TileTapGame({ onFinish, best, goHome, difficulty = "medium" }) {
     const s = stateRef.current;
     if (!s || s.ended) return;
     const candidate = s.tiles.find(
-      (t) => t.lane === lane && !t.hit && t.y + TILE_H > TAP_ZONE_Y - 30 && t.y < TAP_ZONE_Y + 40,
+      (t) =>
+        t.lane === lane &&
+        !t.hit &&
+        t.y + TILE_H > TAP_ZONE_Y - 30 &&
+        t.y < TAP_ZONE_Y + 40,
     );
     if (candidate) {
       candidate.hit = true;
@@ -12159,7 +12487,7 @@ function TileTapGame({ onFinish, best, goHome, difficulty = "medium" }) {
 
   useEffect(() => {
     function onKeyDown(e) {
-      const map = { a: 0, s: 1, k: 2, l: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+      const map = { a: 0, s: 1, k: 2, l: 3, 1: 0, 2: 1, 3: 2, 4: 3 };
       if (map[e.key] !== undefined) {
         e.preventDefault();
         tapLane(map[e.key]);
@@ -12223,14 +12551,7 @@ function TileTapGame({ onFinish, best, goHome, difficulty = "medium" }) {
 /* --------------------------- challenge: sokoban --------------------------- */
 
 const SOKOBAN_LEVELS = [
-  [
-    "#######",
-    "#.....#",
-    "#.B.O.#",
-    "#..P..#",
-    "#.....#",
-    "#######",
-  ],
+  ["#######", "#.....#", "#.B.O.#", "#..P..#", "#.....#", "#######"],
   [
     "########",
     "#..#...#",
@@ -12467,7 +12788,11 @@ function SudokuMiniGame({ onFinish, best, goHome, difficulty = "medium" }) {
         removed += 1;
       }
     }
-    return { solution, puzzle, fixed: puzzle.map((row) => row.map((v) => v !== 0)) };
+    return {
+      solution,
+      puzzle,
+      fixed: puzzle.map((row) => row.map((v) => v !== 0)),
+    };
   }
 
   const [state, setState] = useState(freshState);
@@ -12490,7 +12815,9 @@ function SudokuMiniGame({ onFinish, best, goHome, difficulty = "medium" }) {
       puzzle[r][c] = n;
       setState({ ...state, puzzle });
       AudioEngine.playSfx("click");
-      const solved = puzzle.every((row, ri) => row.every((v, ci) => v === state.solution[ri][ci]));
+      const solved = puzzle.every((row, ri) =>
+        row.every((v, ci) => v === state.solution[ri][ci]),
+      );
       if (solved) {
         setOver(true);
         onFinish(mistakes);
@@ -12513,11 +12840,15 @@ function SudokuMiniGame({ onFinish, best, goHome, difficulty = "medium" }) {
             <button
               key={r + "-" + c}
               className={`ga-sudoku-cell ${state.fixed[r][c] ? "is-fixed" : ""} ${
-                selected && selected.r === r && selected.c === c ? "is-selected" : ""
+                selected && selected.r === r && selected.c === c
+                  ? "is-selected"
+                  : ""
               } ${c % 3 === 2 && c !== SIZE - 1 ? "border-right" : ""} ${
                 r % 2 === 1 && r !== SIZE - 1 ? "border-bottom" : ""
               }`}
-              onClick={() => !state.fixed[r][c] && !over && setSelected({ r, c })}
+              onClick={() =>
+                !state.fixed[r][c] && !over && setSelected({ r, c })
+              }
               disabled={state.fixed[r][c] || over}
             >
               {v !== 0 ? v : ""}
@@ -12543,8 +12874,8 @@ function SudokuMiniGame({ onFinish, best, goHome, difficulty = "medium" }) {
         ))}
       </div>
       <p className="ga-hint">
-        Tap a cell, then a number. Fill so every row, column, and 2×3 box has
-        1 through 6 with no repeats.
+        Tap a cell, then a number. Fill so every row, column, and 2×3 box has 1
+        through 6 with no repeats.
       </p>
     </div>
   );
@@ -12789,8 +13120,8 @@ const GAMES = [
   {
     id: "mazemuncher",
     name: "Dot Muncher",
-    category: "challenge",
-    tagline: "Eat every dot, dodge the ghosts.",
+    category: "endless",
+    tagline: "Clear mazes back to back — ghosts get faster each level.",
     difficulty: "Medium",
     icon: Ghost,
     scoreLabel: "dots",
@@ -12819,8 +13150,8 @@ const GAMES = [
   {
     id: "barrelclimb",
     name: "Barrel Climb",
-    category: "challenge",
-    tagline: "Dodge the barrels, reach the top.",
+    category: "endless",
+    tagline: "Climb after climb — barrels get faster every time.",
     difficulty: "Medium",
     icon: TrendingUp,
     scoreLabel: "climbs",
@@ -12829,8 +13160,8 @@ const GAMES = [
   {
     id: "bubbletrap",
     name: "Bubble Trap",
-    category: "challenge",
-    tagline: "Pop every foe to clear the level.",
+    category: "endless",
+    tagline: "Clear wave after wave of foes until you run out of lives.",
     difficulty: "Medium",
     icon: Waves,
     scoreLabel: "pts",
@@ -12839,11 +13170,11 @@ const GAMES = [
   {
     id: "duelring",
     name: "Duel Ring",
-    category: "challenge",
-    tagline: "Best of 3 rounds wins the match.",
+    category: "endless",
+    tagline: "Win your match, then face a tougher opponent.",
     difficulty: "Medium",
     icon: Swords,
-    scoreLabel: "rounds",
+    scoreLabel: "matches",
     lowerIsBetter: false,
   },
   {
@@ -12889,8 +13220,8 @@ const GAMES = [
   {
     id: "bomberquest",
     name: "Bomber Quest",
-    category: "challenge",
-    tagline: "Place bombs, clear the arena.",
+    category: "endless",
+    tagline: "Clear arena after arena — enemies keep coming.",
     difficulty: "Medium",
     icon: Flame,
     scoreLabel: "kills",
@@ -12909,8 +13240,8 @@ const GAMES = [
   {
     id: "missile",
     name: "Missile Defense",
-    category: "challenge",
-    tagline: "Intercept the barrage, protect your cities.",
+    category: "endless",
+    tagline: "Endless waves — protect your cities as long as you can.",
     difficulty: "Medium",
     icon: ShieldAlert,
     scoreLabel: "pts",
@@ -13473,10 +13804,7 @@ function GameArt({ id, accent }) {
     case "mazemuncher":
       shapes = (
         <>
-          <path
-            d="M32 32 L54 22 A22 22 0 1 1 54 42 Z"
-            fill="#ffe066"
-          />
+          <path d="M32 32 L54 22 A22 22 0 1 1 54 42 Z" fill="#ffe066" />
           <circle cx="14" cy="40" r="8" fill="#ff9696" />
           <rect x="8" y="46" width="12" height="4" fill="#ff9696" />
         </>
@@ -13514,8 +13842,22 @@ function GameArt({ id, accent }) {
               fill="#8dd1ff"
             />
           ))}
-          <line x1="16" y1="10" x2="16" y2="44" stroke="#8dd1ff" strokeWidth="2" />
-          <line x1="28" y1="10" x2="28" y2="44" stroke="#8dd1ff" strokeWidth="2" />
+          <line
+            x1="16"
+            y1="10"
+            x2="16"
+            y2="44"
+            stroke="#8dd1ff"
+            strokeWidth="2"
+          />
+          <line
+            x1="28"
+            y1="10"
+            x2="28"
+            y2="44"
+            stroke="#8dd1ff"
+            strokeWidth="2"
+          />
           <circle cx="44" cy="40" r="8" fill="#ff9696" />
         </>
       );
@@ -13523,9 +13865,30 @@ function GameArt({ id, accent }) {
     case "bubbletrap":
       shapes = (
         <>
-          <circle cx="22" cy="24" r="10" fill="none" stroke="#8dd1ff" strokeWidth="3" />
-          <circle cx="42" cy="38" r="7" fill="none" stroke="#8dd1ff" strokeWidth="3" />
-          <circle cx="44" cy="16" r="5" fill="none" stroke="#8dd1ff" strokeWidth="3" />
+          <circle
+            cx="22"
+            cy="24"
+            r="10"
+            fill="none"
+            stroke="#8dd1ff"
+            strokeWidth="3"
+          />
+          <circle
+            cx="42"
+            cy="38"
+            r="7"
+            fill="none"
+            stroke="#8dd1ff"
+            strokeWidth="3"
+          />
+          <circle
+            cx="44"
+            cy="16"
+            r="5"
+            fill="none"
+            stroke="#8dd1ff"
+            strokeWidth="3"
+          />
         </>
       );
       break;
@@ -13534,7 +13897,12 @@ function GameArt({ id, accent }) {
         <>
           <rect x="12" y="20" width="12" height="28" rx="3" fill="#78efd9" />
           <rect x="40" y="20" width="12" height="28" rx="3" fill="#ff9696" />
-          <path d="M24 30 L40 30" stroke="#ffdc80" strokeWidth="4" strokeLinecap="round" />
+          <path
+            d="M24 30 L40 30"
+            stroke="#ffdc80"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
         </>
       );
       break;
@@ -13550,7 +13918,14 @@ function GameArt({ id, accent }) {
       shapes = (
         <>
           <circle cx="20" cy="48" r="6" fill="#242643" />
-          <line x1="40" y1="12" x2="40" y2="46" stroke="#f5f3ff" strokeWidth="2" />
+          <line
+            x1="40"
+            y1="12"
+            x2="40"
+            y2="46"
+            stroke="#f5f3ff"
+            strokeWidth="2"
+          />
           <path d="M40 12 L54 18 L40 24 Z" fill="#ff9696" />
           <circle cx="18" cy="20" r="5" fill="#f5f3ff" />
         </>
@@ -13568,7 +13943,14 @@ function GameArt({ id, accent }) {
     case "asteroid":
       shapes = (
         <>
-          <circle cx="32" cy="32" r="16" fill="none" stroke="#bea9ff" strokeWidth="3" />
+          <circle
+            cx="32"
+            cy="32"
+            r="16"
+            fill="none"
+            stroke="#bea9ff"
+            strokeWidth="3"
+          />
           <path d="M32 20 L40 32 L32 28 L24 32 Z" fill="#78efd9" />
         </>
       );
@@ -13622,7 +14004,12 @@ function GameArt({ id, accent }) {
     case "tenpinalley":
       shapes = (
         <>
-          {[[26, 40], [38, 40], [32, 26], [32, 14]].map(([x, y], i) => (
+          {[
+            [26, 40],
+            [38, 40],
+            [32, 26],
+            [32, 14],
+          ].map(([x, y], i) => (
             <circle key={i} cx={x} cy={y} r="5" fill="#f5f3ff" />
           ))}
         </>
@@ -13691,7 +14078,15 @@ function GameArt({ id, accent }) {
     case "rallysprint":
       shapes = (
         <>
-          <ellipse cx="32" cy="32" rx="24" ry="18" fill="none" stroke="#3d3d3d" strokeWidth="10" />
+          <ellipse
+            cx="32"
+            cy="32"
+            rx="24"
+            ry="18"
+            fill="none"
+            stroke="#3d3d3d"
+            strokeWidth="10"
+          />
           <rect x="26" y="12" width="8" height="6" fill="#f5f3ff" />
         </>
       );
@@ -13700,7 +14095,15 @@ function GameArt({ id, accent }) {
       shapes = (
         <>
           {["A", "B", "C"].map((l, i) => (
-            <rect key={i} x={12 + i * 15} y="24" width="12" height="16" rx="2" fill={i === 1 ? "#78efd9" : "#3c3f7d"} />
+            <rect
+              key={i}
+              x={12 + i * 15}
+              y="24"
+              width="12"
+              height="16"
+              rx="2"
+              fill={i === 1 ? "#78efd9" : "#3c3f7d"}
+            />
           ))}
         </>
       );
@@ -13709,7 +14112,15 @@ function GameArt({ id, accent }) {
       shapes = (
         <>
           {[0, 1, 2].map((i) => (
-            <rect key={i} x={12 + (i % 2) * 22} y={12 + Math.floor(i / 2) * 22} width="18" height="18" rx="3" fill="#8dd1ff" />
+            <rect
+              key={i}
+              x={12 + (i % 2) * 22}
+              y={12 + Math.floor(i / 2) * 22}
+              width="18"
+              height="18"
+              rx="3"
+              fill="#8dd1ff"
+            />
           ))}
         </>
       );
@@ -13735,7 +14146,14 @@ function GameArt({ id, accent }) {
     case "skyhoops":
       shapes = (
         <>
-          <line x1="16" y1="20" x2="48" y2="20" stroke="#f5f3ff" strokeWidth="3" />
+          <line
+            x1="16"
+            y1="20"
+            x2="48"
+            y2="20"
+            stroke="#f5f3ff"
+            strokeWidth="3"
+          />
           <rect x="46" y="10" width="3" height="12" fill="#ff9696" />
           <circle cx="26" cy="42" r="9" fill="#ffb381" />
         </>
@@ -13763,7 +14181,14 @@ function GameArt({ id, accent }) {
       shapes = (
         <>
           {[0, 1, 2, 3].map((i) => (
-            <rect key={i} x={10 + i * 11} y={i % 2 === 0 ? 14 : 30} width="8" height="20" fill="#f5f3ff" />
+            <rect
+              key={i}
+              x={10 + i * 11}
+              y={i % 2 === 0 ? 14 : 30}
+              width="8"
+              height="20"
+              fill="#f5f3ff"
+            />
           ))}
         </>
       );
@@ -13772,7 +14197,16 @@ function GameArt({ id, accent }) {
       shapes = (
         <>
           <rect x="16" y="16" width="16" height="16" rx="2" fill="#ffb381" />
-          <rect x="36" y="36" width="14" height="14" rx="2" fill="none" stroke="#78efd9" strokeWidth="3" />
+          <rect
+            x="36"
+            y="36"
+            width="14"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#78efd9"
+            strokeWidth="3"
+          />
         </>
       );
       break;
@@ -13903,7 +14337,16 @@ function Hub({ best, onPlay, difficulty, onChangeDifficulty }) {
           ))}
         </div>
         <div className="">
-          <img src="/logo.png" alt="Game Center" className="ga-logo " style={{ width: "100px", height: "auto",background: "transparent" }} />
+          <img
+            src="/logo.png"
+            alt="Game Center"
+            className="ga-logo "
+            style={{
+              width: "100px",
+              height: "auto",
+              background: "transparent",
+            }}
+          />
         </div>
         <p className="ga-marquee-sub">
           One arcade, two wings: chase a high score forever, or beat the game
