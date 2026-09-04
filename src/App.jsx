@@ -45,6 +45,17 @@ import {
   Pin,
   Grid2x2,
   Dices,
+  Gauge,
+  Keyboard,
+  Shuffle,
+  Apple,
+  Boxes,
+  Dribbble,
+  LocateFixed,
+  TreePine,
+  Music2,
+  Box,
+  Hash,
 } from "lucide-react";
 
 /* ------------------------------ audio engine ------------------------------ */
@@ -4844,13 +4855,7 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const BULLET_SPEED = 5.2;
   const GUN_LEVELS = [
     { cooldown: 220, shots: [{ dx: 0, angle: 0 }] },
-    {
-      cooldown: 195,
-      shots: [
-        { dx: -6, angle: 0 },
-        { dx: 6, angle: 0 },
-      ],
-    },
+    { cooldown: 195, shots: [{ dx: -6, angle: 0 }, { dx: 6, angle: 0 }] },
     {
       cooldown: 165,
       shots: [
@@ -5042,14 +5047,7 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         ) {
           s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
           setGunLevel(s.gunLevel);
-          spawnBurst(
-            s.particles,
-            s.powerup.x,
-            s.powerup.y,
-            "#ffdc80",
-            16,
-            "score",
-          );
+          spawnBurst(s.particles, s.powerup.x, s.powerup.y, "#ffdc80", 16, "score");
           AudioEngine.playSfx("win");
           s.powerup = null;
         }
@@ -5186,8 +5184,8 @@ function SkyBarrageGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Your gun fires automatically — just dodge with the arrows. Grab the gold
-        pickups to power up your gun.
+        Your gun fires automatically — just dodge with the arrows. Grab the
+        gold pickups to power up your gun.
       </p>
     </div>
   );
@@ -5207,13 +5205,7 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
   const BULLET_SPEED = 5.6;
   const GUN_LEVELS = [
     { cooldown: 200, shots: [{ dy: 0, angle: 0 }] },
-    {
-      cooldown: 175,
-      shots: [
-        { dy: -5, angle: 0 },
-        { dy: 5, angle: 0 },
-      ],
-    },
+    { cooldown: 175, shots: [{ dy: -5, angle: 0 }, { dy: 5, angle: 0 }] },
     {
       cooldown: 150,
       shots: [
@@ -5408,14 +5400,7 @@ function ByteRaiderGame({ onFinish, best, goHome, difficulty = "medium" }) {
         ) {
           s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
           setGunLevel(s.gunLevel);
-          spawnBurst(
-            s.particles,
-            s.powerup.x,
-            s.powerup.y,
-            "#ffdc80",
-            16,
-            "score",
-          );
+          spawnBurst(s.particles, s.powerup.x, s.powerup.y, "#ffdc80", 16, "score");
           AudioEngine.playSfx("win");
           s.powerup = null;
         }
@@ -6227,8 +6212,8 @@ function BubbleTrapGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Arrows to move/jump, Space to blow bubbles. Pop every enemy to clear the
-        level.
+        Arrows to move/jump, Space to blow bubbles. Pop every enemy to clear
+        the level.
       </p>
     </div>
   );
@@ -6314,7 +6299,8 @@ function DuelRingGame({ onFinish, best, goHome, difficulty = "medium" }) {
         p.facing = dist >= 0 ? 1 : -1;
         c.facing = dist >= 0 ? -1 : 1;
         if (keysRef.current.left) p.x = Math.max(0, p.x - 2.4);
-        if (keysRef.current.right) p.x = Math.min(W - FIGHTER_W, p.x + 2.4);
+        if (keysRef.current.right)
+          p.x = Math.min(W - FIGHTER_W, p.x + 2.4);
         p.atkCd = Math.max(0, p.atkCd - 16);
         c.atkCd = Math.max(0, c.atkCd - 16);
         p.hitFlash = Math.max(0, p.hitFlash - 16);
@@ -6589,11 +6575,7 @@ function PeakClimberGame({ onFinish, best, goHome, difficulty = "medium" }) {
   function freshState() {
     const plats = freshPlatforms();
     return {
-      player: {
-        x: W / 2 - PLAYER_W / 2,
-        y: plats[0].y - PLAYER_H,
-        vy: JUMP_VELOCITY,
-      },
+      player: { x: W / 2 - PLAYER_W / 2, y: plats[0].y - PLAYER_H, vy: JUMP_VELOCITY },
       platforms: plats,
       camY: 0,
       particles: [],
@@ -6795,8 +6777,8 @@ function PeakClimberGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Auto-bounces upward. Steer left/right, dodge the ice critters, climb as
-        high as you can.
+        Auto-bounces upward. Steer left/right, dodge the ice critters, climb
+        as high as you can.
       </p>
     </div>
   );
@@ -6947,14 +6929,7 @@ function NineHoleGame({ onFinish, best, goHome, difficulty = "medium" }) {
           }
           const dh = Math.hypot(b.x - cfg.hole.x, b.y - cfg.hole.y);
           if (dh < holeR && Math.hypot(b.vx, b.vy) < 2.2) {
-            spawnBurst(
-              s.particles,
-              cfg.hole.x,
-              cfg.hole.y,
-              "#ffdc80",
-              16,
-              "score",
-            );
+            spawnBurst(s.particles, cfg.hole.x, cfg.hole.y, "#ffdc80", 16, "score");
             AudioEngine.playSfx("win");
             if (s.holeIdx + 1 >= HOLES.length) {
               s.ended = true;
@@ -7480,20 +7455,10 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
             }
           }
         }
-        if (
-          s.powerup &&
-          Math.hypot(s.powerup.x - sh.x, s.powerup.y - sh.y) < 16
-        ) {
+        if (s.powerup && Math.hypot(s.powerup.x - sh.x, s.powerup.y - sh.y) < 16) {
           s.gunLevel = Math.min(MAX_GUN_LEVEL, s.gunLevel + 1);
           setGunLevel(s.gunLevel);
-          spawnBurst(
-            s.particles,
-            s.powerup.x,
-            s.powerup.y,
-            "#ffdc80",
-            16,
-            "score",
-          );
+          spawnBurst(s.particles, s.powerup.x, s.powerup.y, "#ffdc80", 16, "score");
           AudioEngine.playSfx("win");
           s.powerup = null;
         }
@@ -7659,8 +7624,8 @@ function AsteroidBlitzGame({ onFinish, best, goHome, difficulty = "medium" }) {
         </button>
       </div>
       <p className="ga-hint">
-        Rotate and thrust to steer — your gun fires automatically. Grab the gold
-        pickups to power it up. Rocks split when hit.
+        Rotate and thrust to steer — your gun fires automatically. Grab the
+        gold pickups to power it up. Rocks split when hit.
       </p>
     </div>
   );
@@ -7756,7 +7721,9 @@ function BomberQuestGame({ onFinish, best, goHome, difficulty = "medium" }) {
   function move(dir) {
     const s = stateRef.current;
     if (!s || s.ended) return;
-    const d = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] }[dir];
+    const d = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] }[
+      dir
+    ];
     const nr = s.player.r + d[0],
       nc = s.player.c + d[1];
     if (passable(s, nr, nc)) {
@@ -8526,8 +8493,8 @@ function MissileDefenseGame({ onFinish, best, goHome, difficulty = "medium" }) {
         />
       )}
       <p className="ga-hint">
-        Tap/click anywhere to fire an interceptor. Protect your cities through{" "}
-        {wavesToWin} waves.
+        Tap/click anywhere to fire an interceptor. Protect your cities
+        through {wavesToWin} waves.
       </p>
     </div>
   );
@@ -8812,9 +8779,7 @@ function CentipedeSwarmGame({ onFinish, best, goHome, difficulty = "medium" }) {
         });
       });
       ctx.fillStyle = "#ffdc80";
-      s2.bullets.forEach((b) =>
-        ctx.fillRect(b.c * CELL + CELL / 2 - 2, b.y, 4, 8),
-      );
+      s2.bullets.forEach((b) => ctx.fillRect(b.c * CELL + CELL / 2 - 2, b.y, 4, 8));
       if (s2.powerup) {
         ctx.fillStyle = "#ffdc80";
         ctx.beginPath();
@@ -9003,9 +8968,7 @@ function BubblePopGame({ onFinish, best, goHome, difficulty = "medium" }) {
       const row = [];
       for (let c = 0; c < COLS; c++) {
         row.push(
-          r < initialRows
-            ? Math.floor(Math.random() * BUBBLE_COLORS.length)
-            : null,
+          r < initialRows ? Math.floor(Math.random() * BUBBLE_COLORS.length) : null,
         );
       }
       grid.push(row);
@@ -9175,13 +9138,7 @@ function BubblePopGame({ onFinish, best, goHome, difficulty = "medium" }) {
       ctx.stroke();
       ctx.fillStyle = BUBBLE_COLORS[s.nextColor];
       ctx.beginPath();
-      ctx.arc(
-        s.column * CELL + CELL / 2,
-        ROWS * CELL + 18,
-        CELL / 2 - 2,
-        0,
-        Math.PI * 2,
-      );
+      ctx.arc(s.column * CELL + CELL / 2, ROWS * CELL + 18, CELL / 2 - 2, 0, Math.PI * 2);
       ctx.fill();
       updateAndDrawParticles(ctx, s.particles);
       rafRef.current = requestAnimationFrame(loop);
@@ -9503,8 +9460,8 @@ function TenPinAlleyGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <button onClick={() => aim(1)}>→</button>
       </div>
       <p className="ga-hint">
-        Aim left/right, hold Bowl to charge power, release to roll. 10 frames,
-        knock 'em all down.
+        Aim left/right, hold Bowl to charge power, release to roll. 10
+        frames, knock 'em all down.
       </p>
     </div>
   );
@@ -9666,11 +9623,7 @@ function ConnectFourGame({ onFinish, best, goHome, difficulty = "medium" }) {
         <Overlay
           emoji={result === "win" ? "🏆" : result === "lose" ? "🤖" : "🤝"}
           title={
-            result === "win"
-              ? "You win!"
-              : result === "lose"
-                ? "CPU wins"
-                : "Draw"
+            result === "win" ? "You win!" : result === "lose" ? "CPU wins" : "Draw"
           }
           statLines={[`Round wins this session: ${wins}`]}
           onRestart={reset}
@@ -9857,8 +9810,7 @@ function CheckersGame({ onFinish, best, goHome }) {
     dirsFor(piece).forEach(([dr, dc]) => {
       const nr = r + dr,
         nc = c + dc;
-      if (inBounds(nr, nc) && !board[idx(nr, nc)])
-        simple.push({ r: nr, c: nc });
+      if (inBounds(nr, nc) && !board[idx(nr, nc)]) simple.push({ r: nr, c: nc });
       const jr = r + dr * 2,
         jc = c + dc * 2;
       if (
@@ -10051,9 +10003,7 @@ function CheckersGame({ onFinish, best, goHome }) {
               {piece && (
                 <span
                   className="ga-checkers-piece"
-                  style={{
-                    background: piece.owner === "P" ? "#78efd9" : "#ff9696",
-                  }}
+                  style={{ background: piece.owner === "P" ? "#78efd9" : "#ff9696" }}
                 >
                   {piece.king ? "♛" : ""}
                 </span>
@@ -10157,9 +10107,7 @@ function SolitaireGame({ onFinish, best, goHome }) {
   }
   function canStack(target, card) {
     if (!target) return card.rank === 13;
-    return (
-      isRed(target.suit) !== isRed(card.suit) && target.rank === card.rank + 1
-    );
+    return isRed(target.suit) !== isRed(card.suit) && target.rank === card.rank + 1;
   }
   function canFoundation(foundationPile, card) {
     if (foundationPile.length === 0) return card.rank === 1;
@@ -10238,10 +10186,7 @@ function SolitaireGame({ onFinish, best, goHome }) {
   }
 
   useEffect(() => {
-    const total = Object.values(game.foundations).reduce(
-      (a, p) => a + p.length,
-      0,
-    );
+    const total = Object.values(game.foundations).reduce((a, p) => a + p.length, 0);
     if (total === 52 && !over) {
       setOver(true);
       onFinish(moves);
@@ -10303,11 +10248,7 @@ function SolitaireGame({ onFinish, best, goHome }) {
       </div>
       <div className="ga-solitaire-tableau">
         {game.tableau.map((pile, col) => (
-          <div
-            key={col}
-            className="ga-solitaire-col"
-            onClick={() => clickTableau(col)}
-          >
+          <div key={col} className="ga-solitaire-col" onClick={() => clickTableau(col)}>
             {pile.map((card, i) => (
               <span
                 key={card.id}
@@ -10385,19 +10326,11 @@ function scoreYzCategory(cat, dice) {
   const counts = [0, 0, 0, 0, 0, 0, 0];
   dice.forEach((d) => (counts[d] += 1));
   const sum = dice.reduce((a, b) => a + b, 0);
-  const numberCats = {
-    ones: 1,
-    twos: 2,
-    threes: 3,
-    fours: 4,
-    fives: 5,
-    sixes: 6,
-  };
+  const numberCats = { ones: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
   if (numberCats[cat]) return counts[numberCats[cat]] * numberCats[cat];
   if (cat === "threeKind") return counts.some((c) => c >= 3) ? sum : 0;
   if (cat === "fourKind") return counts.some((c) => c >= 4) ? sum : 0;
-  if (cat === "fullHouse")
-    return counts.includes(3) && counts.includes(2) ? 25 : 0;
+  if (cat === "fullHouse") return counts.includes(3) && counts.includes(2) ? 25 : 0;
   if (cat === "smallStraight") {
     const has = (arr) => arr.every((n) => counts[n] > 0);
     return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 30 : 0;
@@ -10435,9 +10368,7 @@ function YahtzeeGame({ onFinish, best, goHome }) {
     AudioEngine.playSfx("select");
     setGame((g) => ({
       ...g,
-      dice: g.dice.map((d, i) =>
-        g.held[i] ? d : 1 + Math.floor(Math.random() * 6),
-      ),
+      dice: g.dice.map((d, i) => (g.held[i] ? d : 1 + Math.floor(Math.random() * 6))),
       rollsLeft: g.rollsLeft - 1,
     }));
   }
@@ -10457,17 +10388,12 @@ function YahtzeeGame({ onFinish, best, goHome }) {
       const scores = { ...g.scores, [cat]: val };
       const round = g.round + 1;
       if (round > 13) {
-        const upperSum = [
-          "ones",
-          "twos",
-          "threes",
-          "fours",
-          "fives",
-          "sixes",
-        ].reduce((a, c) => a + (scores[c] || 0), 0);
+        const upperSum = ["ones", "twos", "threes", "fours", "fives", "sixes"].reduce(
+          (a, c) => a + (scores[c] || 0),
+          0,
+        );
         const bonus = upperSum >= 63 ? 35 : 0;
-        const finalTotal =
-          Object.values(scores).reduce((a, b) => a + b, 0) + bonus;
+        const finalTotal = Object.values(scores).reduce((a, b) => a + b, 0) + bonus;
         setTotal(finalTotal);
         setOver(true);
         onFinish(finalTotal);
@@ -10539,8 +10465,2086 @@ function YahtzeeGame({ onFinish, best, goHome }) {
         />
       )}
       <p className="ga-hint">
-        Roll up to 3 times, tap dice to hold them, then lock in a category. Fill
-        all 13 rounds.
+        Roll up to 3 times, tap dice to hold them, then lock in a category.
+        Fill all 13 rounds.
+      </p>
+    </div>
+  );
+}
+
+/* --------------------------- challenge: rally sprint (car racing) --------------------------- */
+
+function RallySprintGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { maxSpeed, turnRate } = {
+    easy: { maxSpeed: 3.2, turnRate: 0.05 },
+    medium: { maxSpeed: 3.8, turnRate: 0.055 },
+    hard: { maxSpeed: 4.4, turnRate: 0.06 },
+  }[difficulty];
+  const W = 280,
+    H = 280;
+  const CX = W / 2,
+    CY = H / 2;
+  const RX = 116,
+    RY = 96,
+    TRACK_W = 40;
+  const INNER_RX = RX - TRACK_W,
+    INNER_RY = RY - TRACK_W;
+  const THRUST = 0.14,
+    DRAG = 0.965,
+    OFFTRACK_DRAG = 0.9;
+  const LAPS_TARGET = 3;
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const keysRef = useRef({
+    left: false,
+    right: false,
+    thrust: false,
+    brake: false,
+  });
+  const [laps, setLaps] = useState(0);
+  const [timeMs, setTimeMs] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function trackD(x, y) {
+    return ((x - CX) / RX) ** 2 + ((y - CY) / RY) ** 2;
+  }
+  function innerD(x, y) {
+    return ((x - CX) / INNER_RX) ** 2 + ((y - CY) / INNER_RY) ** 2;
+  }
+  function freshState() {
+    return {
+      car: { x: CX, y: CY - RY + TRACK_W / 2, vx: 0, vy: 0, angle: 0 },
+      particles: [],
+      totalAngle: 0,
+      lastAngle: null,
+      laps: 0,
+      elapsed: 0,
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setLaps(0);
+    setTimeMs(0);
+    setOver(false);
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    let last = performance.now();
+    function loop(now) {
+      const dt = now - last;
+      last = now;
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended) {
+        s.elapsed += dt;
+        setTimeMs(s.elapsed);
+        const c = s.car;
+        if (keysRef.current.left) c.angle -= turnRate;
+        if (keysRef.current.right) c.angle += turnRate;
+        if (keysRef.current.thrust) {
+          c.vx += Math.cos(c.angle) * THRUST;
+          c.vy += Math.sin(c.angle) * THRUST;
+        }
+        if (keysRef.current.brake) {
+          c.vx *= 0.9;
+          c.vy *= 0.9;
+        }
+        const speed = Math.hypot(c.vx, c.vy);
+        if (speed > maxSpeed) {
+          c.vx = (c.vx / speed) * maxSpeed;
+          c.vy = (c.vy / speed) * maxSpeed;
+        }
+        const d = trackD(c.x, c.y);
+        const di = innerD(c.x, c.y);
+        const onTrack = d <= 1 && di >= 1;
+        c.vx *= onTrack ? DRAG : OFFTRACK_DRAG;
+        c.vy *= onTrack ? DRAG : OFFTRACK_DRAG;
+        c.x += c.vx;
+        c.y += c.vy;
+        const ang = Math.atan2(c.y - CY, c.x - CX);
+        if (s.lastAngle !== null) {
+          let delta = ang - s.lastAngle;
+          if (delta > Math.PI) delta -= Math.PI * 2;
+          if (delta < -Math.PI) delta += Math.PI * 2;
+          s.totalAngle += delta;
+        }
+        s.lastAngle = ang;
+        const newLaps = Math.max(0, Math.floor(s.totalAngle / (Math.PI * 2)));
+        if (newLaps !== s.laps) {
+          s.laps = newLaps;
+          setLaps(s.laps);
+          AudioEngine.playSfx("score");
+          if (s.laps >= LAPS_TARGET) {
+            s.ended = true;
+            setOver(true);
+          }
+        }
+        if (onTrack && keysRef.current.thrust) {
+          spawnBurst(
+            s.particles,
+            c.x - Math.cos(c.angle) * 8,
+            c.y - Math.sin(c.angle) * 8,
+            "#8dd1ff",
+            1,
+            null,
+          );
+        }
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#1c3a24";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#3d3d3d";
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, RX, RY, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#1c3a24";
+      ctx.beginPath();
+      ctx.ellipse(CX, CY, INNER_RX, INNER_RY, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#f5f3ff";
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(CX, CY - RY);
+      ctx.lineTo(CX, CY - INNER_RY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const c2 = s2.car;
+      ctx.save();
+      ctx.translate(c2.x, c2.y);
+      ctx.rotate(c2.angle);
+      ctx.fillStyle = "#ff9696";
+      ctx.fillRect(-7, -4, 14, 8);
+      ctx.restore();
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (["ArrowLeft", "a", "A"].includes(e.key)) {
+        keysRef.current.left = true;
+        e.preventDefault();
+      }
+      if (["ArrowRight", "d", "D"].includes(e.key)) {
+        keysRef.current.right = true;
+        e.preventDefault();
+      }
+      if (["ArrowUp", "w", "W"].includes(e.key)) {
+        keysRef.current.thrust = true;
+        e.preventDefault();
+      }
+      if (["ArrowDown", "s", "S"].includes(e.key)) {
+        keysRef.current.brake = true;
+        e.preventDefault();
+      }
+    }
+    function onKeyUp(e) {
+      if (["ArrowLeft", "a", "A"].includes(e.key)) keysRef.current.left = false;
+      if (["ArrowRight", "d", "D"].includes(e.key))
+        keysRef.current.right = false;
+      if (["ArrowUp", "w", "W"].includes(e.key)) keysRef.current.thrust = false;
+      if (["ArrowDown", "s", "S"].includes(e.key)) keysRef.current.brake = false;
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (over) onFinish(Math.round(timeMs / 1000));
+    // eslint-disable-next-line
+  }, [over]);
+
+  function press(k, v) {
+    keysRef.current[k] = v;
+  }
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>
+          Lap: {Math.min(laps, LAPS_TARGET)}/{LAPS_TARGET}
+        </span>
+        <span>Time: {(timeMs / 1000).toFixed(1)}s</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap">
+        <canvas ref={canvasRef} width={W} height={H} className="ga-canvas" />
+      </div>
+      {over && (
+        <Overlay
+          emoji="🏁"
+          title="Race complete!"
+          statLines={[`Time: ${(timeMs / 1000).toFixed(1)}s`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="win"
+        />
+      )}
+      <div className="ga-dpad-row">
+        <button
+          onMouseDown={() => press("left", true)}
+          onMouseUp={() => press("left", false)}
+          onMouseLeave={() => press("left", false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            press("left", true);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            press("left", false);
+          }}
+        >
+          ↺
+        </button>
+        <button
+          onMouseDown={() => press("thrust", true)}
+          onMouseUp={() => press("thrust", false)}
+          onMouseLeave={() => press("thrust", false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            press("thrust", true);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            press("thrust", false);
+          }}
+        >
+          ▲
+        </button>
+        <button
+          onMouseDown={() => press("brake", true)}
+          onMouseUp={() => press("brake", false)}
+          onMouseLeave={() => press("brake", false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            press("brake", true);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            press("brake", false);
+          }}
+        >
+          ▼
+        </button>
+        <button
+          onMouseDown={() => press("right", true)}
+          onMouseUp={() => press("right", false)}
+          onMouseLeave={() => press("right", false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            press("right", true);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            press("right", false);
+          }}
+        >
+          ↻
+        </button>
+      </div>
+      <p className="ga-hint">
+        Steer and accelerate around the loop. Stay on track — grass slows you
+        down. Fastest 3-lap time wins.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- challenge: word guess (wordle style) --------------------------- */
+
+const WG_WORDS = [
+  "APPLE","BRAVE","CRANE","DELTA","EAGLE","FROST","GRAPE","HOUSE","IVORY","JOLLY",
+  "KNIFE","LEMON","MANGO","NOBLE","OCEAN","PLANT","QUIET","RIVER","STONE","TIGER",
+  "UNION","VIVID","WHEAT","XENON","YIELD","ZEBRA","AMBER","BLOOM","CLOUD","DRIFT",
+  "EMBER","FLAME","GHOST","HONEY","INPUT","JUMBO","KARMA","LUNAR","MAPLE","NORTH",
+  "OASIS","PEARL","QUEST","ROBIN","SOLAR","TRACE","URBAN","VOICE","WITTY","CHESS",
+];
+const WG_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
+function computeFeedback(guess, target) {
+  const result = Array(5).fill("absent");
+  const pool = {};
+  for (let i = 0; i < 5; i++) {
+    if (guess[i] === target[i]) {
+      result[i] = "correct";
+    } else {
+      pool[target[i]] = (pool[target[i]] || 0) + 1;
+    }
+  }
+  for (let i = 0; i < 5; i++) {
+    if (result[i] === "correct") continue;
+    if (pool[guess[i]] > 0) {
+      result[i] = "present";
+      pool[guess[i]] -= 1;
+    }
+  }
+  return result;
+}
+
+function WordGuessGame({ onFinish, best, goHome }) {
+  function freshState() {
+    return {
+      target: WG_WORDS[Math.floor(Math.random() * WG_WORDS.length)],
+      guesses: [],
+      current: "",
+      letterStatus: {},
+    };
+  }
+  const [game, setGame] = useState(freshState);
+  const [over, setOver] = useState(null);
+  const [shake, setShake] = useState(false);
+
+  function reset() {
+    setGame(freshState());
+    setOver(null);
+    setShake(false);
+  }
+  function submitGuess() {
+    setGame((g) => {
+      if (g.current.length !== 5 || over) return g;
+      const feedback = computeFeedback(g.current, g.target);
+      const guesses = [...g.guesses, { letters: g.current.split(""), feedback }];
+      const letterStatus = { ...g.letterStatus };
+      g.current.split("").forEach((letter, i) => {
+        const rank = { absent: 0, present: 1, correct: 2 };
+        const cur = letterStatus[letter];
+        if (!cur || rank[feedback[i]] > rank[cur]) letterStatus[letter] = feedback[i];
+      });
+      AudioEngine.playSfx("click");
+      if (g.current === g.target) {
+        setTimeout(() => {
+          setOver("win");
+          onFinish(guesses.length);
+        }, 300);
+      } else if (guesses.length >= 6) {
+        setTimeout(() => setOver("lose"), 300);
+      } else {
+        setShake(false);
+      }
+      return { ...g, guesses, current: "", letterStatus };
+    });
+  }
+  function pressKey(k) {
+    if (over) return;
+    setGame((g) => {
+      if (k === "ENTER") {
+        if (g.current.length !== 5) {
+          setShake(true);
+          setTimeout(() => setShake(false), 300);
+          return g;
+        }
+        return g;
+      }
+      if (k === "BACK") return { ...g, current: g.current.slice(0, -1) };
+      if (g.current.length < 5 && /^[A-Z]$/.test(k)) return { ...g, current: g.current + k };
+      return g;
+    });
+  }
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (over) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitGuess();
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        pressKey("BACK");
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        e.preventDefault();
+        pressKey(e.key.toUpperCase());
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line
+  }, [game, over]);
+
+  const colorFor = { correct: "#78efd9", present: "#ffdc80", absent: "#3d3d5c" };
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Guesses: {game.guesses.length}/6</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className={`ga-wg-grid ${shake ? "ga-shake" : ""}`}>
+        {Array.from({ length: 6 }, (_, r) => {
+          const guess = game.guesses[r];
+          const letters = guess
+            ? guess.letters
+            : r === game.guesses.length
+              ? game.current.padEnd(5, " ").split("")
+              : Array(5).fill(" ");
+          return (
+            <div key={r} className="ga-wg-row">
+              {letters.map((letter, c) => (
+                <span
+                  key={c}
+                  className="ga-wg-cell"
+                  style={{
+                    background: guess ? colorFor[guess.feedback[c]] : "transparent",
+                    color: guess ? "#1c1c2e" : "#f5f3ff",
+                  }}
+                >
+                  {letter.trim()}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+      {over && (
+        <Overlay
+          emoji={over === "win" ? "🟩" : "🟥"}
+          title={over === "win" ? "Solved it!" : `The word was ${game.target}`}
+          statLines={[
+            over === "win" ? `Guesses used: ${game.guesses.length}` : "Better luck next time",
+          ]}
+          onRestart={reset}
+          onExit={goHome}
+          sound={over === "win" ? "win" : "lose"}
+        />
+      )}
+      <div className="ga-wg-keyboard">
+        {WG_ROWS.map((row, i) => (
+          <div key={i} className="ga-wg-krow">
+            {i === 2 && (
+              <button className="ga-wg-key ga-wg-wide" onClick={submitGuess}>
+                Enter
+              </button>
+            )}
+            {row.split("").map((k) => (
+              <button
+                key={k}
+                className="ga-wg-key"
+                style={{
+                  background: game.letterStatus[k] ? colorFor[game.letterStatus[k]] : undefined,
+                }}
+                onClick={() => pressKey(k)}
+              >
+                {k}
+              </button>
+            ))}
+            {i === 2 && (
+              <button
+                className="ga-wg-key ga-wg-wide"
+                onClick={() => pressKey("BACK")}
+              >
+                ⌫
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="ga-hint">
+        Guess the 5-letter word in 6 tries. Green = right spot, yellow = wrong
+        spot, gray = not in the word.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- challenge: slide fifteen (15-puzzle) --------------------------- */
+
+function SlideFifteenGame({ onFinish, best, goHome }) {
+  const SIZE = 4;
+  function solved() {
+    const arr = Array.from({ length: 15 }, (_, i) => i + 1);
+    arr.push(0);
+    return arr;
+  }
+  function neighbors(idx) {
+    const r = Math.floor(idx / SIZE),
+      c = idx % SIZE;
+    const out = [];
+    if (r > 0) out.push(idx - SIZE);
+    if (r < SIZE - 1) out.push(idx + SIZE);
+    if (c > 0) out.push(idx - 1);
+    if (c < SIZE - 1) out.push(idx + 1);
+    return out;
+  }
+  function shuffled() {
+    const arr = solved();
+    let blank = 15;
+    for (let i = 0; i < 250; i++) {
+      const opts = neighbors(blank);
+      const pick = opts[Math.floor(Math.random() * opts.length)];
+      [arr[blank], arr[pick]] = [arr[pick], arr[blank]];
+      blank = pick;
+    }
+    return arr;
+  }
+
+  const [board, setBoard] = useState(shuffled);
+  const [moves, setMoves] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function reset() {
+    setBoard(shuffled());
+    setMoves(0);
+    setOver(false);
+  }
+  function tap(idx) {
+    if (over) return;
+    const blank = board.indexOf(0);
+    if (neighbors(blank).includes(idx)) {
+      const nb = [...board];
+      [nb[blank], nb[idx]] = [nb[idx], nb[blank]];
+      setBoard(nb);
+      AudioEngine.playSfx("click");
+      const nm = moves + 1;
+      setMoves(nm);
+      if (nb.every((v, i) => v === solved()[i])) {
+        setOver(true);
+        onFinish(nm);
+      }
+    }
+  }
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Moves: {moves}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-slide-grid">
+        {board.map((v, i) => (
+          <button
+            key={i}
+            className={`ga-slide-cell ${v === 0 ? "is-blank" : ""}`}
+            onClick={() => tap(i)}
+            disabled={v === 0 || !!over}
+          >
+            {v !== 0 ? v : ""}
+          </button>
+        ))}
+      </div>
+      {over && (
+        <Overlay
+          emoji="🧩"
+          title="Solved!"
+          statLines={[`Moves used: ${moves}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="win"
+        />
+      )}
+      <p className="ga-hint">
+        Tap a tile next to the blank space to slide it. Arrange 1 through 15
+        in order.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- endless: fruit slice --------------------------- */
+
+function FruitSliceGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { startLives, spawnMs, bombChance } = {
+    easy: { startLives: 4, spawnMs: 1000, bombChance: 0.1 },
+    medium: { startLives: 3, spawnMs: 800, bombChance: 0.16 },
+    hard: { startLives: 2, spawnMs: 600, bombChance: 0.22 },
+  }[difficulty];
+  const W = 280,
+    H = 380;
+  const GRAVITY = 0.14;
+  const COLORS = ["#ff9696", "#ffdc80", "#8dd1ff", "#bea9ff", "#78efd9"];
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(startLives);
+  const [over, setOver] = useState(false);
+
+  function spawnItem() {
+    const isBomb = Math.random() < bombChance;
+    return {
+      x: 30 + Math.random() * (W - 60),
+      y: H + 14,
+      vx: (Math.random() - 0.5) * 2.2,
+      vy: -(6.5 + Math.random() * 1.8),
+      r: 15,
+      bomb: isBomb,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      sliced: false,
+    };
+  }
+  function freshState() {
+    return {
+      items: [],
+      particles: [],
+      lives: startLives,
+      score: 0,
+      spawnTimer: 400,
+      elapsed: 0,
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setScore(0);
+    setLives(startLives);
+    setOver(false);
+  }
+  function loseLife(s) {
+    s.lives -= 1;
+    setLives(s.lives);
+    if (s.lives <= 0) {
+      s.ended = true;
+      setOver(true);
+    }
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    let last = performance.now();
+    function loop(now) {
+      const dt = now - last;
+      last = now;
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended) {
+        s.elapsed += dt;
+        const ramp = 1 + Math.min(1, s.elapsed / 40000);
+        s.spawnTimer -= dt;
+        if (s.spawnTimer <= 0) {
+          s.spawnTimer = spawnMs / ramp;
+          s.items.push(spawnItem());
+        }
+        s.items.forEach((it) => {
+          it.vy += GRAVITY;
+          it.x += it.vx;
+          it.y += it.vy;
+        });
+        s.items.forEach((it) => {
+          if (!it.sliced && it.y > H + 30 && !it.bomb) {
+            it.dead = true;
+            loseLife(s);
+          } else if (it.y > H + 30) {
+            it.dead = true;
+          }
+        });
+        s.items = s.items.filter((it) => !it.dead);
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#1c1730";
+      ctx.fillRect(0, 0, W, H);
+      s2.items.forEach((it) => {
+        if (it.sliced) return;
+        ctx.fillStyle = it.bomb ? "#242643" : it.color;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, it.r, 0, Math.PI * 2);
+        ctx.fill();
+        if (it.bomb) {
+          ctx.fillStyle = "#ff9696";
+          ctx.fillRect(it.x - 1, it.y - it.r - 6, 2, 6);
+        }
+      });
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  function onPointer(e) {
+    e.preventDefault();
+    const s = stateRef.current;
+    if (!s || s.ended) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touches = e.touches ? Array.from(e.touches) : [e];
+    touches.forEach((t) => {
+      const x = ((t.clientX - rect.left) / rect.width) * W;
+      const y = ((t.clientY - rect.top) / rect.height) * H;
+      s.items.forEach((it) => {
+        if (it.sliced || it.dead) return;
+        if (Math.hypot(it.x - x, it.y - y) < it.r + 10) {
+          it.sliced = true;
+          it.dead = true;
+          if (it.bomb) {
+            spawnBurst(s.particles, it.x, it.y, "#ff9696", 20, "hit");
+            AudioEngine.playSfx("hit");
+            s.ended = true;
+            setOver(true);
+          } else {
+            spawnBurst(s.particles, it.x, it.y, it.color, 12, "score");
+            AudioEngine.playSfx("score");
+            s.score += 1;
+            setScore(s.score);
+          }
+        }
+      });
+    });
+  }
+
+  useEffect(() => {
+    if (over) onFinish(score);
+    // eslint-disable-next-line
+  }, [over]);
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Score: {score}</span>
+        <span>Lives: {"♥".repeat(Math.max(0, lives))}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap">
+        <canvas
+          ref={canvasRef}
+          width={W}
+          height={H}
+          className="ga-canvas"
+          onMouseDown={onPointer}
+          onTouchStart={onPointer}
+        />
+      </div>
+      {over && (
+        <Overlay
+          emoji="💣"
+          title="Sliced a bomb!"
+          statLines={[`Score: ${score}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="lose"
+        />
+      )}
+      <p className="ga-hint">
+        Tap or click the fruit to slice it. Avoid the bombs, don't let fruit
+        fall past you.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- endless: tower stack --------------------------- */
+
+function TowerStackGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { speedMul } = {
+    easy: { speedMul: 0.8 },
+    medium: { speedMul: 1 },
+    hard: { speedMul: 1.25 },
+  }[difficulty];
+  const W = 240,
+    H = 380;
+  const BLOCK_H = 24;
+  const START_W = 130;
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function freshState() {
+    return {
+      stack: [{ x: W / 2 - START_W / 2, w: START_W, color: "#78efd9" }],
+      moving: { x: 0, w: START_W, dir: 1, speed: 1.6 * speedMul },
+      camY: 0,
+      particles: [],
+      score: 0,
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setScore(0);
+    setOver(false);
+  }
+  const PALETTE = ["#78efd9", "#8dd1ff", "#bea9ff", "#ffdc80", "#ff9696"];
+
+  function drop() {
+    const s = stateRef.current;
+    if (!s || s.ended) return;
+    const top = s.stack[s.stack.length - 1];
+    const mv = s.moving;
+    const left = Math.max(top.x, mv.x);
+    const right = Math.min(top.x + top.w, mv.x + mv.w);
+    const overlap = right - left;
+    if (overlap <= 4) {
+      s.ended = true;
+      setOver(true);
+      spawnBurst(s.particles, mv.x + mv.w / 2, H - 100, "#ff9696", 16, "hit");
+      return;
+    }
+    s.stack.push({
+      x: left,
+      w: overlap,
+      color: PALETTE[s.stack.length % PALETTE.length],
+    });
+    s.score += 1;
+    setScore(s.score);
+    AudioEngine.playSfx("click");
+    spawnBurst(s.particles, left + overlap / 2, H - 100, "#ffdc80", 8, "score");
+    s.moving = {
+      x: Math.random() < 0.5 ? 0 : W - overlap,
+      w: overlap,
+      dir: Math.random() < 0.5 ? 1 : -1,
+      speed: Math.min(4.5, 1.6 * speedMul + s.stack.length * 0.08),
+    };
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    function loop() {
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended) {
+        const mv = s.moving;
+        mv.x += mv.dir * mv.speed;
+        if (mv.x <= 0 || mv.x + mv.w >= W) mv.dir *= -1;
+        mv.x = Math.max(0, Math.min(W - mv.w, mv.x));
+        const targetCam = Math.max(0, (s.stack.length - 8) * BLOCK_H);
+        s.camY += (targetCam - s.camY) * 0.1;
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#171a30";
+      ctx.fillRect(0, 0, W, H);
+      s2.stack.forEach((b, i) => {
+        const y = H - 60 - (i + 1) * BLOCK_H + s2.camY;
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, y, b.w, BLOCK_H - 2);
+      });
+      if (!s2.ended) {
+        const y = H - 60 - (s2.stack.length + 1) * BLOCK_H + s2.camY;
+        ctx.fillStyle = PALETTE[s2.stack.length % PALETTE.length];
+        ctx.fillRect(s2.moving.x, y, s2.moving.w, BLOCK_H - 2);
+      }
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === " " || e.key === "ArrowUp") {
+        e.preventDefault();
+        drop();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (over) onFinish(score);
+    // eslint-disable-next-line
+  }, [over]);
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Height: {score}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap" onMouseDown={drop} onTouchStart={(e) => { e.preventDefault(); drop(); }}>
+        <canvas ref={canvasRef} width={W} height={H} className="ga-canvas" />
+      </div>
+      {over && (
+        <Overlay
+          emoji="🏗️"
+          title="Tower toppled!"
+          statLines={[`Blocks stacked: ${score}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="lose"
+        />
+      )}
+      <p className="ga-hint">
+        Tap, click, or press Space to drop the block. Line it up with the
+        block below to keep the tower growing.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- challenge: sky hoops (basketball) --------------------------- */
+
+function SkyHoopsGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { totalShots, hoopMoveRange } = {
+    easy: { totalShots: 10, hoopMoveRange: 40 },
+    medium: { totalShots: 10, hoopMoveRange: 70 },
+    hard: { totalShots: 10, hoopMoveRange: 100 },
+  }[difficulty];
+  const W = 260,
+    H = 320;
+  const GRAVITY = 0.22;
+  const BALL_R = 9;
+  const RIM_W = 34;
+  const START_X = W / 2,
+    START_Y = H - 30;
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const [shotsTaken, setShotsTaken] = useState(0);
+  const [made, setMade] = useState(0);
+  const [charging, setCharging] = useState(false);
+  const [over, setOver] = useState(false);
+
+  function randomHoop() {
+    return {
+      x: W / 2 + (Math.random() - 0.5) * hoopMoveRange * 2,
+      y: 60 + Math.random() * 50,
+    };
+  }
+  function freshState() {
+    return {
+      hoop: randomHoop(),
+      ball: { x: START_X, y: START_Y, vx: 0, vy: 0, flying: false, scored: false },
+      power: 0,
+      powerDir: 1,
+      charging: false,
+      shotsTaken: 0,
+      made: 0,
+      particles: [],
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setShotsTaken(0);
+    setMade(0);
+    setCharging(false);
+    setOver(false);
+  }
+  function startCharge() {
+    const s = stateRef.current;
+    if (!s || s.ball.flying || s.ended) return;
+    s.charging = true;
+    s.power = 0;
+    s.powerDir = 1;
+    setCharging(true);
+  }
+  function releaseCharge() {
+    const s = stateRef.current;
+    if (!s || !s.charging) return;
+    s.charging = false;
+    setCharging(false);
+    const dx = s.hoop.x - START_X;
+    const power = 0.55 + s.power * 0.5;
+    s.ball.vx = dx * 0.02 * power * 2.2;
+    s.ball.vy = -(9 + power * 3.5);
+    s.ball.flying = true;
+    s.ball.scored = false;
+    AudioEngine.playSfx("select");
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    function loop() {
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended) {
+        if (s.charging) {
+          s.power += 0.03 * s.powerDir;
+          if (s.power >= 1) {
+            s.power = 1;
+            s.powerDir = -1;
+          }
+          if (s.power <= 0) {
+            s.power = 0;
+            s.powerDir = 1;
+          }
+        }
+        const b = s.ball;
+        if (b.flying) {
+          b.vy += GRAVITY;
+          b.x += b.vx;
+          b.y += b.vy;
+          if (
+            !b.scored &&
+            b.vy > 0 &&
+            Math.abs(b.x - s.hoop.x) < RIM_W / 2 - 4 &&
+            b.y > s.hoop.y - 6 &&
+            b.y < s.hoop.y + 10
+          ) {
+            b.scored = true;
+            s.made += 1;
+            setMade(s.made);
+            spawnBurst(s.particles, s.hoop.x, s.hoop.y, "#ffdc80", 14, "score");
+            AudioEngine.playSfx("score");
+          }
+          if (b.y > H + 20 || b.x < -20 || b.x > W + 20) {
+            s.shotsTaken += 1;
+            setShotsTaken(s.shotsTaken);
+            if (s.shotsTaken >= totalShots) {
+              s.ended = true;
+              setOver(true);
+            } else {
+              s.hoop = randomHoop();
+              s.ball = { x: START_X, y: START_Y, vx: 0, vy: 0, flying: false, scored: false };
+            }
+          }
+        }
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#241833";
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "#f5f3ff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(s2.hoop.x - RIM_W / 2, s2.hoop.y);
+      ctx.lineTo(s2.hoop.x + RIM_W / 2, s2.hoop.y);
+      ctx.stroke();
+      ctx.fillStyle = "#ff9696";
+      ctx.fillRect(s2.hoop.x + RIM_W / 2, s2.hoop.y - 24, 3, 24);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#ffb381";
+      ctx.beginPath();
+      ctx.arc(s2.ball.x, s2.ball.y, BALL_R, 0, Math.PI * 2);
+      ctx.fill();
+      if (!s2.ball.flying && !s2.ended) {
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
+        ctx.beginPath();
+        ctx.moveTo(START_X, START_Y);
+        ctx.lineTo(s2.hoop.x, s2.hoop.y);
+        ctx.stroke();
+      }
+      if (s2.charging) {
+        ctx.fillStyle = "#242643";
+        ctx.fillRect(10, H - 14, 80, 8);
+        ctx.fillStyle = "#ffdc80";
+        ctx.fillRect(10, H - 14, 80 * s2.power, 8);
+      }
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    if (over) onFinish(made);
+    // eslint-disable-next-line
+  }, [over]);
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>
+          Shot: {Math.min(shotsTaken + 1, totalShots)}/{totalShots}
+        </span>
+        <span>Made: {made}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap">
+        <canvas ref={canvasRef} width={W} height={H} className="ga-canvas" />
+      </div>
+      {over && (
+        <Overlay
+          emoji="🏀"
+          title="Round complete!"
+          statLines={[`Baskets made: ${made}/${totalShots}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="win"
+        />
+      )}
+      <div className="ga-dpad-row">
+        <button
+          onMouseDown={startCharge}
+          onMouseUp={releaseCharge}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            startCharge();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            releaseCharge();
+          }}
+        >
+          🏀 Hold to shoot
+        </button>
+      </div>
+      <p className="ga-hint">
+        Hold to charge your shot, release to shoot. The hoop moves after
+        every attempt — {totalShots} shots total.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- challenge: dart throw --------------------------- */
+
+function DartThrowGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { wobbleMax } = {
+    easy: { wobbleMax: 26 },
+    medium: { wobbleMax: 38 },
+    hard: { wobbleMax: 50 },
+  }[difficulty];
+  const W = 240,
+    H = 260;
+  const CX = W / 2,
+    CY = H / 2 - 6;
+  const RINGS = [
+    { r: 12, pts: 50, color: "#ff9696" },
+    { r: 28, pts: 25, color: "#f5f3ff" },
+    { r: 50, pts: 15, color: "#8dd1ff" },
+    { r: 80, pts: 10, color: "#f5f3ff" },
+  ];
+  const TOTAL_THROWS = 10;
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const [throwsTaken, setThrowsTaken] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [charging, setCharging] = useState(false);
+  const [over, setOver] = useState(false);
+
+  function freshState() {
+    return {
+      reticle: { x: CX, y: CY },
+      darts: [],
+      power: 0,
+      powerDir: 1,
+      charging: false,
+      throwsTaken: 0,
+      total: 0,
+      particles: [],
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setThrowsTaken(0);
+    setTotal(0);
+    setCharging(false);
+    setOver(false);
+  }
+  function moveReticle(dx, dy) {
+    const s = stateRef.current;
+    if (!s || s.ended || s.charging) return;
+    s.reticle.x = Math.max(20, Math.min(W - 20, s.reticle.x + dx));
+    s.reticle.y = Math.max(20, Math.min(H - 20, s.reticle.y + dy));
+  }
+  function startCharge() {
+    const s = stateRef.current;
+    if (!s || s.ended) return;
+    s.charging = true;
+    s.power = 0;
+    s.powerDir = 1;
+    setCharging(true);
+  }
+  function scoreFor(dist) {
+    for (const ring of RINGS) if (dist <= ring.r) return ring.pts;
+    return 0;
+  }
+  function releaseCharge() {
+    const s = stateRef.current;
+    if (!s || !s.charging) return;
+    s.charging = false;
+    setCharging(false);
+    const accuracy = s.power;
+    const wobble = wobbleMax * (1 - accuracy);
+    const ang = Math.random() * Math.PI * 2;
+    const off = Math.random() * wobble;
+    const dx = s.reticle.x - CX + Math.cos(ang) * off;
+    const dy = s.reticle.y - CY + Math.sin(ang) * off;
+    const dist = Math.hypot(dx, dy);
+    const pts = scoreFor(dist);
+    s.total += pts;
+    setTotal(s.total);
+    s.darts.push({ x: CX + dx, y: CY + dy });
+    spawnBurst(s.particles, CX + dx, CY + dy, pts > 0 ? "#ffdc80" : "#a8a6c8", 8, pts > 0 ? "score" : null);
+    AudioEngine.playSfx(pts >= 25 ? "win" : "click");
+    s.throwsTaken += 1;
+    setThrowsTaken(s.throwsTaken);
+    if (s.throwsTaken >= TOTAL_THROWS) {
+      s.ended = true;
+      setOver(true);
+    }
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    function loop() {
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended && s.charging) {
+        s.power += 0.025 * s.powerDir;
+        if (s.power >= 1) {
+          s.power = 1;
+          s.powerDir = -1;
+        }
+        if (s.power <= 0) {
+          s.power = 0;
+          s.powerDir = 1;
+        }
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#1c1730";
+      ctx.fillRect(0, 0, W, H);
+      [...RINGS].reverse().forEach((ring) => {
+        ctx.fillStyle = ring.color;
+        ctx.beginPath();
+        ctx.arc(CX, CY, ring.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = "#242643";
+      ctx.beginPath();
+      ctx.arc(CX, CY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      s2.darts.forEach((d) => {
+        ctx.fillStyle = "#242643";
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      if (!s2.ended) {
+        ctx.strokeStyle = "#78efd9";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(s2.reticle.x - 6, s2.reticle.y);
+        ctx.lineTo(s2.reticle.x + 6, s2.reticle.y);
+        ctx.moveTo(s2.reticle.x, s2.reticle.y - 6);
+        ctx.lineTo(s2.reticle.x, s2.reticle.y + 6);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+      if (s2.charging) {
+        ctx.fillStyle = "#242643";
+        ctx.fillRect(10, H - 14, 80, 8);
+        ctx.fillStyle = "#ffdc80";
+        ctx.fillRect(10, H - 14, 80 * s2.power, 8);
+      }
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (["ArrowLeft", "a", "A"].includes(e.key)) {
+        moveReticle(-4, 0);
+        e.preventDefault();
+      }
+      if (["ArrowRight", "d", "D"].includes(e.key)) {
+        moveReticle(4, 0);
+        e.preventDefault();
+      }
+      if (["ArrowUp", "w", "W"].includes(e.key)) {
+        moveReticle(0, -4);
+        e.preventDefault();
+      }
+      if (["ArrowDown", "s", "S"].includes(e.key)) {
+        moveReticle(0, 4);
+        e.preventDefault();
+      }
+      if (e.key === " " && stateRef.current && !stateRef.current.charging) {
+        startCharge();
+        e.preventDefault();
+      }
+    }
+    function onKeyUp(e) {
+      if (e.key === " ") {
+        releaseCharge();
+        e.preventDefault();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (over) onFinish(total);
+    // eslint-disable-next-line
+  }, [over]);
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>
+          Throw: {Math.min(throwsTaken + 1, TOTAL_THROWS)}/{TOTAL_THROWS}
+        </span>
+        <span>Score: {total}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap">
+        <canvas ref={canvasRef} width={W} height={H} className="ga-canvas" />
+      </div>
+      {over && (
+        <Overlay
+          emoji="🎯"
+          title="Round complete!"
+          statLines={[`Total score: ${total}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="win"
+        />
+      )}
+      <div className="ga-dpad">
+        <button onClick={() => moveReticle(0, -8)}>↑</button>
+        <div>
+          <button onClick={() => moveReticle(-8, 0)}>←</button>
+          <button onClick={() => moveReticle(0, 8)}>↓</button>
+          <button onClick={() => moveReticle(8, 0)}>→</button>
+        </div>
+      </div>
+      <div className="ga-dpad-row">
+        <button
+          onMouseDown={startCharge}
+          onMouseUp={releaseCharge}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            startCharge();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            releaseCharge();
+          }}
+        >
+          🎯 Hold to throw
+        </button>
+      </div>
+      <p className="ga-hint">
+        Move the reticle, hold to charge steadiness, release near full for
+        the most accurate throw. {TOTAL_THROWS} darts total.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- endless: slalom ski --------------------------- */
+
+function SlalomSkiGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { spawnMs, speedMul } = {
+    easy: { spawnMs: 1100, speedMul: 0.85 },
+    medium: { spawnMs: 900, speedMul: 1 },
+    hard: { spawnMs: 700, speedMul: 1.25 },
+  }[difficulty];
+  const W = 220,
+    H = 360;
+  const SKIER_Y = H - 70;
+  const SKIER_W = 16,
+    SKIER_H = 26;
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const keysRef = useRef({ left: false, right: false });
+  const [score, setScore] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function spawnObstacle() {
+    const isGate = Math.random() < 0.7;
+    if (isGate) {
+      const gapX = 40 + Math.random() * (W - 80);
+      const gapW = 60;
+      return { type: "gate", y: -20, gapX, gapW, passed: false };
+    }
+    return { type: "tree", y: -20, x: 20 + Math.random() * (W - 40) };
+  }
+  function freshState() {
+    return {
+      skierX: W / 2,
+      obstacles: [],
+      particles: [],
+      spawnTimer: 600,
+      elapsed: 0,
+      score: 0,
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setScore(0);
+    setOver(false);
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    let last = performance.now();
+    function loop(now) {
+      const dt = now - last;
+      last = now;
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended) {
+        s.elapsed += dt;
+        const ramp = speedMul * (1 + Math.min(1.2, s.elapsed / 35000));
+        if (keysRef.current.left) s.skierX = Math.max(14, s.skierX - 3.2);
+        if (keysRef.current.right) s.skierX = Math.min(W - 14, s.skierX + 3.2);
+        s.spawnTimer -= dt;
+        if (s.spawnTimer <= 0) {
+          s.spawnTimer = spawnMs / ramp;
+          s.obstacles.push(spawnObstacle());
+        }
+        s.obstacles.forEach((o) => (o.y += 2.6 * ramp));
+        s.obstacles.forEach((o) => {
+          if (o.type === "gate" && !o.passed && o.y > SKIER_Y) {
+            o.passed = true;
+            const inGap = s.skierX > o.gapX && s.skierX < o.gapX + o.gapW;
+            if (inGap) {
+              s.score += 1;
+              setScore(s.score);
+              AudioEngine.playSfx("score");
+            } else {
+              spawnBurst(s.particles, s.skierX, SKIER_Y, "#ff9696", 10, "hit");
+            }
+          }
+          if (
+            o.type === "tree" &&
+            Math.abs(o.y - SKIER_Y) < 14 &&
+            Math.abs(o.x - s.skierX) < 14
+          ) {
+            s.ended = true;
+            setOver(true);
+            spawnBurst(s.particles, s.skierX, SKIER_Y, "#ff9696", 16, "hit");
+          }
+        });
+        s.obstacles = s.obstacles.filter((o) => o.y < H + 30);
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#eef3f7";
+      ctx.fillRect(0, 0, W, H);
+      s2.obstacles.forEach((o) => {
+        if (o.type === "gate") {
+          ctx.fillStyle = "#ff9696";
+          ctx.fillRect(o.gapX - 6, o.y, 6, 20);
+          ctx.fillStyle = "#8dd1ff";
+          ctx.fillRect(o.gapX + o.gapW, o.y, 6, 20);
+        } else {
+          ctx.fillStyle = "#2c6b3f";
+          ctx.beginPath();
+          ctx.moveTo(o.x, o.y - 10);
+          ctx.lineTo(o.x + 10, o.y + 10);
+          ctx.lineTo(o.x - 10, o.y + 10);
+          ctx.closePath();
+          ctx.fill();
+        }
+      });
+      ctx.fillStyle = "#242643";
+      ctx.fillRect(s2.skierX - SKIER_W / 2, SKIER_Y - SKIER_H / 2, SKIER_W, SKIER_H);
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (["ArrowLeft", "a", "A"].includes(e.key)) {
+        keysRef.current.left = true;
+        e.preventDefault();
+      }
+      if (["ArrowRight", "d", "D"].includes(e.key)) {
+        keysRef.current.right = true;
+        e.preventDefault();
+      }
+    }
+    function onKeyUp(e) {
+      if (["ArrowLeft", "a", "A"].includes(e.key)) keysRef.current.left = false;
+      if (["ArrowRight", "d", "D"].includes(e.key))
+        keysRef.current.right = false;
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (over) onFinish(score);
+    // eslint-disable-next-line
+  }, [over]);
+
+  function press(dir, isDown) {
+    if (dir === "left") keysRef.current.left = isDown;
+    if (dir === "right") keysRef.current.right = isDown;
+  }
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Gates: {score}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap">
+        <canvas ref={canvasRef} width={W} height={H} className="ga-canvas" />
+      </div>
+      {over && (
+        <Overlay
+          emoji="⛷️"
+          title="Wiped out!"
+          statLines={[`Gates passed: ${score}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="lose"
+        />
+      )}
+      <div className="ga-dpad-row">
+        <button
+          onMouseDown={() => press("left", true)}
+          onMouseUp={() => press("left", false)}
+          onMouseLeave={() => press("left", false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            press("left", true);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            press("left", false);
+          }}
+        >
+          ←
+        </button>
+        <button
+          onMouseDown={() => press("right", true)}
+          onMouseUp={() => press("right", false)}
+          onMouseLeave={() => press("right", false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            press("right", true);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            press("right", false);
+          }}
+        >
+          →
+        </button>
+      </div>
+      <p className="ga-hint">
+        Arrows to steer. Ski between the flag gates, dodge the trees.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- endless: tile tap (piano tiles style) --------------------------- */
+
+function TileTapGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { fallSpeedMul, spawnMs } = {
+    easy: { fallSpeedMul: 0.85, spawnMs: 620 },
+    medium: { fallSpeedMul: 1, spawnMs: 520 },
+    hard: { fallSpeedMul: 1.2, spawnMs: 420 },
+  }[difficulty];
+  const LANES = 4;
+  const LANE_W = 60;
+  const W = LANES * LANE_W,
+    H = 380;
+  const TAP_ZONE_Y = H - 70;
+  const TILE_H = 66;
+
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const stateRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function freshState() {
+    return {
+      tiles: [],
+      particles: [],
+      spawnTimer: 300,
+      elapsed: 0,
+      score: 0,
+      ended: false,
+    };
+  }
+  function reset() {
+    stateRef.current = freshState();
+    setScore(0);
+    setOver(false);
+  }
+  function fail(s) {
+    s.ended = true;
+    setOver(true);
+    AudioEngine.playSfx("hit");
+  }
+  function tapLane(lane) {
+    const s = stateRef.current;
+    if (!s || s.ended) return;
+    const candidate = s.tiles.find(
+      (t) => t.lane === lane && !t.hit && t.y + TILE_H > TAP_ZONE_Y - 30 && t.y < TAP_ZONE_Y + 40,
+    );
+    if (candidate) {
+      candidate.hit = true;
+      s.score += 1;
+      setScore(s.score);
+      AudioEngine.playSfx("click");
+      spawnBurst(
+        s.particles,
+        lane * LANE_W + LANE_W / 2,
+        TAP_ZONE_Y,
+        "#78efd9",
+        8,
+        "score",
+      );
+    } else {
+      fail(s);
+    }
+  }
+
+  useEffect(() => {
+    stateRef.current = freshState();
+    let last = performance.now();
+    function loop(now) {
+      const dt = now - last;
+      last = now;
+      const s = stateRef.current;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!s.ended) {
+        s.elapsed += dt;
+        const ramp = fallSpeedMul * (1 + Math.min(1.3, s.elapsed / 30000));
+        s.spawnTimer -= dt;
+        if (s.spawnTimer <= 0) {
+          s.spawnTimer = spawnMs / ramp;
+          s.tiles.push({
+            lane: Math.floor(Math.random() * LANES),
+            y: -TILE_H,
+            hit: false,
+          });
+        }
+        s.tiles.forEach((t) => (t.y += 3.4 * ramp));
+        s.tiles.forEach((t) => {
+          if (!t.hit && t.y > TAP_ZONE_Y + 40) {
+            fail(s);
+          }
+        });
+        s.tiles = s.tiles.filter((t) => t.y < H + TILE_H && !t.hit);
+      }
+      const s2 = stateRef.current;
+      ctx.fillStyle = "#121212";
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 1; i < LANES; i++) {
+        ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.beginPath();
+        ctx.moveTo(i * LANE_W, 0);
+        ctx.lineTo(i * LANE_W, H);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(120,239,217,0.5)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, TAP_ZONE_Y + 30);
+      ctx.lineTo(W, TAP_ZONE_Y + 30);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#f5f3ff";
+      s2.tiles.forEach((t) => {
+        ctx.fillRect(t.lane * LANE_W + 3, t.y, LANE_W - 6, TILE_H - 4);
+      });
+      updateAndDrawParticles(ctx, s2.particles);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      const map = { a: 0, s: 1, k: 2, l: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+      if (map[e.key] !== undefined) {
+        e.preventDefault();
+        tapLane(map[e.key]);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (over) onFinish(score);
+    // eslint-disable-next-line
+  }, [over]);
+
+  function onCanvasClick(e) {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touches = e.touches ? Array.from(e.touches) : [e];
+    touches.forEach((t) => {
+      const x = ((t.clientX - rect.left) / rect.width) * W;
+      const lane = Math.min(LANES - 1, Math.max(0, Math.floor(x / LANE_W)));
+      tapLane(lane);
+    });
+  }
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Score: {score}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-canvas-wrap">
+        <canvas
+          ref={canvasRef}
+          width={W}
+          height={H}
+          className="ga-canvas"
+          onMouseDown={onCanvasClick}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            onCanvasClick(e);
+          }}
+        />
+      </div>
+      {over && (
+        <Overlay
+          emoji="🎹"
+          title="Missed a tile!"
+          statLines={[`Score: ${score}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="lose"
+        />
+      )}
+      <p className="ga-hint">
+        Tap the lane as its tile crosses the line — A/S/K/L or 1-4 also work.
+        Miss one and it's over.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- challenge: sokoban --------------------------- */
+
+const SOKOBAN_LEVELS = [
+  [
+    "#######",
+    "#.....#",
+    "#.B.O.#",
+    "#..P..#",
+    "#.....#",
+    "#######",
+  ],
+  [
+    "########",
+    "#..#...#",
+    "#.O.B..#",
+    "#..B.O.#",
+    "#...P..#",
+    "#..#...#",
+    "########",
+  ],
+  [
+    "#########",
+    "#O..#...#",
+    "#.B.#.B.#",
+    "#...P...#",
+    "#.B...O.#",
+    "#...#..O#",
+    "#########",
+  ],
+];
+
+function parseSokobanLevel(rows) {
+  const walls = new Set();
+  const targets = new Set();
+  const boxes = new Set();
+  let player = { r: 0, c: 0 };
+  rows.forEach((row, r) => {
+    row.split("").forEach((ch, c) => {
+      const key = r + "," + c;
+      if (ch === "#") walls.add(key);
+      if (ch === "O") targets.add(key);
+      if (ch === "B") boxes.add(key);
+      if (ch === "P") player = { r, c };
+    });
+  });
+  return { walls, targets, boxes, player, rows };
+}
+
+function SokobanGame({ onFinish, best, goHome }) {
+  function freshLevel(idx) {
+    return parseSokobanLevel(SOKOBAN_LEVELS[idx]);
+  }
+  const [levelIdx, setLevelIdx] = useState(0);
+  const [level, setLevel] = useState(() => freshLevel(0));
+  const [moves, setMoves] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function reset() {
+    setLevelIdx(0);
+    setLevel(freshLevel(0));
+    setMoves(0);
+    setOver(false);
+  }
+  function isSolved(lv) {
+    return [...lv.targets].every((t) => lv.boxes.has(t));
+  }
+  function move(dir) {
+    if (over) return;
+    const d = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] }[dir];
+    setLevel((lv) => {
+      const nr = lv.player.r + d[0],
+        nc = lv.player.c + d[1];
+      const key = nr + "," + nc;
+      if (lv.walls.has(key)) return lv;
+      let boxes = lv.boxes;
+      if (lv.boxes.has(key)) {
+        const br = nr + d[0],
+          bc = nc + d[1];
+        const bkey = br + "," + bc;
+        if (lv.walls.has(bkey) || lv.boxes.has(bkey)) return lv;
+        boxes = new Set(lv.boxes);
+        boxes.delete(key);
+        boxes.add(bkey);
+      }
+      const nl = { ...lv, boxes, player: { r: nr, c: nc } };
+      setMoves((m) => m + 1);
+      AudioEngine.playSfx("click");
+      if (isSolved(nl)) {
+        if (levelIdx + 1 >= SOKOBAN_LEVELS.length) {
+          setOver(true);
+          onFinish(moves + 1);
+        } else {
+          AudioEngine.playSfx("score");
+          setTimeout(() => {
+            setLevelIdx((i) => i + 1);
+            setLevel(freshLevel(levelIdx + 1));
+          }, 500);
+        }
+      }
+      return nl;
+    });
+  }
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      const map = {
+        ArrowUp: "up",
+        w: "up",
+        ArrowDown: "down",
+        s: "down",
+        ArrowLeft: "left",
+        a: "left",
+        ArrowRight: "right",
+        d: "right",
+      };
+      if (map[e.key]) {
+        e.preventDefault();
+        move(map[e.key]);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line
+  }, [level, over, levelIdx]);
+
+  const rows = level.rows.length;
+  const cols = level.rows[0].length;
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>
+          Level: {levelIdx + 1}/{SOKOBAN_LEVELS.length}
+        </span>
+        <span>Moves: {moves}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div
+        className="ga-sokoban-grid"
+        style={{ gridTemplateColumns: `repeat(${cols}, 26px)` }}
+      >
+        {Array.from({ length: rows * cols }, (_, i) => {
+          const r = Math.floor(i / cols),
+            c = i % cols;
+          const key = r + "," + c;
+          const isWall = level.walls.has(key);
+          const isTarget = level.targets.has(key);
+          const isBox = level.boxes.has(key);
+          const isPlayer = level.player.r === r && level.player.c === c;
+          return (
+            <div
+              key={i}
+              className={`ga-sokoban-cell ${isWall ? "is-wall" : ""} ${
+                isTarget ? "is-target" : ""
+              }`}
+            >
+              {isBox && (
+                <span
+                  className={`ga-sokoban-box ${isTarget ? "is-placed" : ""}`}
+                />
+              )}
+              {isPlayer && <span className="ga-sokoban-player" />}
+            </div>
+          );
+        })}
+      </div>
+      {over && (
+        <Overlay
+          emoji="📦"
+          title="All levels cleared!"
+          statLines={[`Total moves: ${moves}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="win"
+        />
+      )}
+      <div className="ga-dpad">
+        <button onClick={() => move("up")}>↑</button>
+        <div>
+          <button onClick={() => move("left")}>←</button>
+          <button onClick={() => move("down")}>↓</button>
+          <button onClick={() => move("right")}>→</button>
+        </div>
+      </div>
+      <p className="ga-hint">
+        Push every box onto a marked target. You can only push, never pull.
+      </p>
+    </div>
+  );
+}
+/* --------------------------- challenge: sudoku mini (6x6) --------------------------- */
+
+function SudokuMiniGame({ onFinish, best, goHome, difficulty = "medium" }) {
+  const { blanks } = {
+    easy: { blanks: 14 },
+    medium: { blanks: 18 },
+    hard: { blanks: 22 },
+  }[difficulty];
+  const SIZE = 6;
+
+  function boxOf(r, c) {
+    const br = Math.floor(r / 2) * 2;
+    const bc = Math.floor(c / 3) * 3;
+    return { br, bc };
+  }
+  function valid(grid, r, c, val) {
+    for (let i = 0; i < SIZE; i++) {
+      if (grid[r][i] === val) return false;
+      if (grid[i][c] === val) return false;
+    }
+    const { br, bc } = boxOf(r, c);
+    for (let dr = 0; dr < 2; dr++)
+      for (let dc = 0; dc < 3; dc++)
+        if (grid[br + dr][bc + dc] === val) return false;
+    return true;
+  }
+  function generateSolution() {
+    const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+    function fill(pos) {
+      if (pos === SIZE * SIZE) return true;
+      const r = Math.floor(pos / SIZE),
+        c = pos % SIZE;
+      const nums = [1, 2, 3, 4, 5, 6].sort(() => Math.random() - 0.5);
+      for (const n of nums) {
+        if (valid(grid, r, c, n)) {
+          grid[r][c] = n;
+          if (fill(pos + 1)) return true;
+          grid[r][c] = 0;
+        }
+      }
+      return false;
+    }
+    fill(0);
+    return grid;
+  }
+  function freshState() {
+    const solution = generateSolution();
+    const puzzle = solution.map((row) => [...row]);
+    let removed = 0;
+    while (removed < blanks) {
+      const r = Math.floor(Math.random() * SIZE);
+      const c = Math.floor(Math.random() * SIZE);
+      if (puzzle[r][c] !== 0) {
+        puzzle[r][c] = 0;
+        removed += 1;
+      }
+    }
+    return { solution, puzzle, fixed: puzzle.map((row) => row.map((v) => v !== 0)) };
+  }
+
+  const [state, setState] = useState(freshState);
+  const [selected, setSelected] = useState(null);
+  const [mistakes, setMistakes] = useState(0);
+  const [over, setOver] = useState(false);
+
+  function reset() {
+    setState(freshState());
+    setSelected(null);
+    setMistakes(0);
+    setOver(false);
+  }
+  function pickNumber(n) {
+    if (over || !selected) return;
+    const { r, c } = selected;
+    if (state.fixed[r][c]) return;
+    if (state.solution[r][c] === n) {
+      const puzzle = state.puzzle.map((row) => [...row]);
+      puzzle[r][c] = n;
+      setState({ ...state, puzzle });
+      AudioEngine.playSfx("click");
+      const solved = puzzle.every((row, ri) => row.every((v, ci) => v === state.solution[ri][ci]));
+      if (solved) {
+        setOver(true);
+        onFinish(mistakes);
+      }
+    } else {
+      setMistakes((m) => m + 1);
+      AudioEngine.playSfx("hit");
+    }
+  }
+
+  return (
+    <div className="ga-game-col">
+      <div className="ga-hud">
+        <span>Mistakes: {mistakes}</span>
+        <span>Best: {best ?? 0}</span>
+      </div>
+      <div className="ga-sudoku-grid">
+        {state.puzzle.map((row, r) =>
+          row.map((v, c) => (
+            <button
+              key={r + "-" + c}
+              className={`ga-sudoku-cell ${state.fixed[r][c] ? "is-fixed" : ""} ${
+                selected && selected.r === r && selected.c === c ? "is-selected" : ""
+              } ${c % 3 === 2 && c !== SIZE - 1 ? "border-right" : ""} ${
+                r % 2 === 1 && r !== SIZE - 1 ? "border-bottom" : ""
+              }`}
+              onClick={() => !state.fixed[r][c] && !over && setSelected({ r, c })}
+              disabled={state.fixed[r][c] || over}
+            >
+              {v !== 0 ? v : ""}
+            </button>
+          )),
+        )}
+      </div>
+      {over && (
+        <Overlay
+          emoji="🔢"
+          title="Solved!"
+          statLines={[`Mistakes made: ${mistakes}`]}
+          onRestart={reset}
+          onExit={goHome}
+          sound="win"
+        />
+      )}
+      <div className="ga-dpad-row">
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <button key={n} onClick={() => pickNumber(n)}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <p className="ga-hint">
+        Tap a cell, then a number. Fill so every row, column, and 2×3 box has
+        1 through 6 with no repeats.
       </p>
     </div>
   );
@@ -10588,6 +12592,17 @@ const GAME_COMPONENTS = {
   checkers: CheckersGame,
   solitaire: SolitaireGame,
   yahtzee: YahtzeeGame,
+  rallysprint: RallySprintGame,
+  wordguess: WordGuessGame,
+  slidefifteen: SlideFifteenGame,
+  fruitslice: FruitSliceGame,
+  towerstack: TowerStackGame,
+  skyhoops: SkyHoopsGame,
+  dartthrow: DartThrowGame,
+  slalomski: SlalomSkiGame,
+  tiletap: TileTapGame,
+  sokoban: SokobanGame,
+  sudokumini: SudokuMiniGame,
 };
 
 const GAMES = [
@@ -10981,6 +12996,116 @@ const GAMES = [
     scoreLabel: "pts",
     lowerIsBetter: false,
   },
+  {
+    id: "rallysprint",
+    name: "Rally Sprint",
+    category: "challenge",
+    tagline: "Fastest 3-lap time around the loop wins.",
+    difficulty: "Medium",
+    icon: Gauge,
+    scoreLabel: "sec",
+    lowerIsBetter: true,
+  },
+  {
+    id: "wordguess",
+    name: "Word Guess",
+    category: "challenge",
+    tagline: "Guess the 5-letter word in 6 tries.",
+    difficulty: "Medium",
+    icon: Keyboard,
+    scoreLabel: "guesses",
+    lowerIsBetter: true,
+  },
+  {
+    id: "slidefifteen",
+    name: "Slide Fifteen",
+    category: "challenge",
+    tagline: "Slide tiles into order in the fewest moves.",
+    difficulty: "Easy",
+    icon: Shuffle,
+    scoreLabel: "moves",
+    lowerIsBetter: true,
+  },
+  {
+    id: "fruitslice",
+    name: "Fruit Slice",
+    category: "endless",
+    tagline: "Slice the fruit, dodge the bombs.",
+    difficulty: "Medium",
+    icon: Apple,
+    scoreLabel: "pts",
+    lowerIsBetter: false,
+  },
+  {
+    id: "towerstack",
+    name: "Tower Stack",
+    category: "endless",
+    tagline: "Drop each block, keep the tower aligned.",
+    difficulty: "Medium",
+    icon: Boxes,
+    scoreLabel: "blocks",
+    lowerIsBetter: false,
+  },
+  {
+    id: "skyhoops",
+    name: "Sky Hoops",
+    category: "challenge",
+    tagline: "10 shots, sink as many baskets as you can.",
+    difficulty: "Medium",
+    icon: Dribbble,
+    scoreLabel: "made",
+    lowerIsBetter: false,
+  },
+  {
+    id: "dartthrow",
+    name: "Dart Throw",
+    category: "challenge",
+    tagline: "10 darts, highest total score wins.",
+    difficulty: "Medium",
+    icon: LocateFixed,
+    scoreLabel: "pts",
+    lowerIsBetter: false,
+  },
+  {
+    id: "slalomski",
+    name: "Slalom Ski",
+    category: "endless",
+    tagline: "Weave through the gates, dodge the trees.",
+    difficulty: "Medium",
+    icon: TreePine,
+    scoreLabel: "gates",
+    lowerIsBetter: false,
+  },
+  {
+    id: "tiletap",
+    name: "Tile Tap",
+    category: "endless",
+    tagline: "Tap each tile as it crosses the line.",
+    difficulty: "Hard",
+    icon: Music2,
+    scoreLabel: "pts",
+    lowerIsBetter: false,
+  },
+  {
+    id: "sokoban",
+    name: "Sokoban",
+    category: "challenge",
+    tagline: "Push every box onto its target.",
+    difficulty: "Medium",
+    icon: Box,
+    scoreLabel: "moves",
+    lowerIsBetter: true,
+  },
+  {
+    id: "sudokumini",
+    name: "Sudoku Mini",
+    category: "challenge",
+    tagline: "6x6 sudoku — fewest mistakes wins.",
+    difficulty: "Medium",
+    icon: Hash,
+    scoreLabel: "mistakes",
+    lowerIsBetter: true,
+  },
 ];
 
 /* --------------------------------- hub ----------------------------------- */
@@ -11348,7 +13473,10 @@ function GameArt({ id, accent }) {
     case "mazemuncher":
       shapes = (
         <>
-          <path d="M32 32 L54 22 A22 22 0 1 1 54 42 Z" fill="#ffe066" />
+          <path
+            d="M32 32 L54 22 A22 22 0 1 1 54 42 Z"
+            fill="#ffe066"
+          />
           <circle cx="14" cy="40" r="8" fill="#ff9696" />
           <rect x="8" y="46" width="12" height="4" fill="#ff9696" />
         </>
@@ -11386,22 +13514,8 @@ function GameArt({ id, accent }) {
               fill="#8dd1ff"
             />
           ))}
-          <line
-            x1="16"
-            y1="10"
-            x2="16"
-            y2="44"
-            stroke="#8dd1ff"
-            strokeWidth="2"
-          />
-          <line
-            x1="28"
-            y1="10"
-            x2="28"
-            y2="44"
-            stroke="#8dd1ff"
-            strokeWidth="2"
-          />
+          <line x1="16" y1="10" x2="16" y2="44" stroke="#8dd1ff" strokeWidth="2" />
+          <line x1="28" y1="10" x2="28" y2="44" stroke="#8dd1ff" strokeWidth="2" />
           <circle cx="44" cy="40" r="8" fill="#ff9696" />
         </>
       );
@@ -11409,30 +13523,9 @@ function GameArt({ id, accent }) {
     case "bubbletrap":
       shapes = (
         <>
-          <circle
-            cx="22"
-            cy="24"
-            r="10"
-            fill="none"
-            stroke="#8dd1ff"
-            strokeWidth="3"
-          />
-          <circle
-            cx="42"
-            cy="38"
-            r="7"
-            fill="none"
-            stroke="#8dd1ff"
-            strokeWidth="3"
-          />
-          <circle
-            cx="44"
-            cy="16"
-            r="5"
-            fill="none"
-            stroke="#8dd1ff"
-            strokeWidth="3"
-          />
+          <circle cx="22" cy="24" r="10" fill="none" stroke="#8dd1ff" strokeWidth="3" />
+          <circle cx="42" cy="38" r="7" fill="none" stroke="#8dd1ff" strokeWidth="3" />
+          <circle cx="44" cy="16" r="5" fill="none" stroke="#8dd1ff" strokeWidth="3" />
         </>
       );
       break;
@@ -11441,12 +13534,7 @@ function GameArt({ id, accent }) {
         <>
           <rect x="12" y="20" width="12" height="28" rx="3" fill="#78efd9" />
           <rect x="40" y="20" width="12" height="28" rx="3" fill="#ff9696" />
-          <path
-            d="M24 30 L40 30"
-            stroke="#ffdc80"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
+          <path d="M24 30 L40 30" stroke="#ffdc80" strokeWidth="4" strokeLinecap="round" />
         </>
       );
       break;
@@ -11462,14 +13550,7 @@ function GameArt({ id, accent }) {
       shapes = (
         <>
           <circle cx="20" cy="48" r="6" fill="#242643" />
-          <line
-            x1="40"
-            y1="12"
-            x2="40"
-            y2="46"
-            stroke="#f5f3ff"
-            strokeWidth="2"
-          />
+          <line x1="40" y1="12" x2="40" y2="46" stroke="#f5f3ff" strokeWidth="2" />
           <path d="M40 12 L54 18 L40 24 Z" fill="#ff9696" />
           <circle cx="18" cy="20" r="5" fill="#f5f3ff" />
         </>
@@ -11487,14 +13568,7 @@ function GameArt({ id, accent }) {
     case "asteroid":
       shapes = (
         <>
-          <circle
-            cx="32"
-            cy="32"
-            r="16"
-            fill="none"
-            stroke="#bea9ff"
-            strokeWidth="3"
-          />
+          <circle cx="32" cy="32" r="16" fill="none" stroke="#bea9ff" strokeWidth="3" />
           <path d="M32 20 L40 32 L32 28 L24 32 Z" fill="#78efd9" />
         </>
       );
@@ -11548,12 +13622,7 @@ function GameArt({ id, accent }) {
     case "tenpinalley":
       shapes = (
         <>
-          {[
-            [26, 40],
-            [38, 40],
-            [32, 26],
-            [32, 14],
-          ].map(([x, y], i) => (
+          {[[26, 40], [38, 40], [32, 26], [32, 14]].map(([x, y], i) => (
             <circle key={i} cx={x} cy={y} r="5" fill="#f5f3ff" />
           ))}
         </>
@@ -11616,6 +13685,112 @@ function GameArt({ id, accent }) {
           <circle cx="22" cy="22" r="2" fill="#242643" />
           <circle cx="42" cy="42" r="2" fill="#242643" />
           <circle cx="38" cy="46" r="2" fill="#242643" />
+        </>
+      );
+      break;
+    case "rallysprint":
+      shapes = (
+        <>
+          <ellipse cx="32" cy="32" rx="24" ry="18" fill="none" stroke="#3d3d3d" strokeWidth="10" />
+          <rect x="26" y="12" width="8" height="6" fill="#f5f3ff" />
+        </>
+      );
+      break;
+    case "wordguess":
+      shapes = (
+        <>
+          {["A", "B", "C"].map((l, i) => (
+            <rect key={i} x={12 + i * 15} y="24" width="12" height="16" rx="2" fill={i === 1 ? "#78efd9" : "#3c3f7d"} />
+          ))}
+        </>
+      );
+      break;
+    case "slidefifteen":
+      shapes = (
+        <>
+          {[0, 1, 2].map((i) => (
+            <rect key={i} x={12 + (i % 2) * 22} y={12 + Math.floor(i / 2) * 22} width="18" height="18" rx="3" fill="#8dd1ff" />
+          ))}
+        </>
+      );
+      break;
+    case "fruitslice":
+      shapes = (
+        <>
+          <circle cx="24" cy="28" r="12" fill="#ff9696" />
+          <circle cx="42" cy="20" r="8" fill="#ffdc80" />
+          <path d="M14 44 L50 44" stroke="#f5f3ff" strokeWidth="2" />
+        </>
+      );
+      break;
+    case "towerstack":
+      shapes = (
+        <>
+          <rect x="18" y="38" width="28" height="10" fill="#78efd9" />
+          <rect x="22" y="26" width="20" height="10" fill="#8dd1ff" />
+          <rect x="26" y="14" width="12" height="10" fill="#ffdc80" />
+        </>
+      );
+      break;
+    case "skyhoops":
+      shapes = (
+        <>
+          <line x1="16" y1="20" x2="48" y2="20" stroke="#f5f3ff" strokeWidth="3" />
+          <rect x="46" y="10" width="3" height="12" fill="#ff9696" />
+          <circle cx="26" cy="42" r="9" fill="#ffb381" />
+        </>
+      );
+      break;
+    case "dartthrow":
+      shapes = (
+        <>
+          <circle cx="32" cy="32" r="18" fill="#f5f3ff" />
+          <circle cx="32" cy="32" r="11" fill="#8dd1ff" />
+          <circle cx="32" cy="32" r="4" fill="#ff9696" />
+        </>
+      );
+      break;
+    case "slalomski":
+      shapes = (
+        <>
+          <path d="M20 10 L28 44 L20 44 Z" fill="#2c6b3f" />
+          <path d="M44 20 L50 44 L38 44 Z" fill="#2c6b3f" />
+          <rect x="30" y="16" width="4" height="30" fill="#242643" />
+        </>
+      );
+      break;
+    case "tiletap":
+      shapes = (
+        <>
+          {[0, 1, 2, 3].map((i) => (
+            <rect key={i} x={10 + i * 11} y={i % 2 === 0 ? 14 : 30} width="8" height="20" fill="#f5f3ff" />
+          ))}
+        </>
+      );
+      break;
+    case "sokoban":
+      shapes = (
+        <>
+          <rect x="16" y="16" width="16" height="16" rx="2" fill="#ffb381" />
+          <rect x="36" y="36" width="14" height="14" rx="2" fill="none" stroke="#78efd9" strokeWidth="3" />
+        </>
+      );
+      break;
+    case "sudokumini":
+      shapes = (
+        <>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <rect
+              key={i}
+              x={12 + (i % 3) * 14}
+              y={14 + Math.floor(i / 3) * 18}
+              width="12"
+              height="16"
+              fill="none"
+              stroke="#8dd1ff"
+              strokeWidth="2"
+            />
+          ))}
         </>
       );
       break;
@@ -11728,16 +13903,7 @@ function Hub({ best, onPlay, difficulty, onChangeDifficulty }) {
           ))}
         </div>
         <div className="">
-          <img
-            src="/logo.png"
-            alt="Game Center"
-            className="ga-logo "
-            style={{
-              width: "100px",
-              height: "auto",
-              background: "transparent",
-            }}
-          />
+          <img src="/logo.png" alt="Game Center" className="ga-logo " style={{ width: "100px", height: "auto",background: "transparent" }} />
         </div>
         <p className="ga-marquee-sub">
           One arcade, two wings: chase a high score forever, or beat the game
@@ -11804,8 +13970,7 @@ function Hub({ best, onPlay, difficulty, onChangeDifficulty }) {
       </section>
 
       <footer className="ga-footer">
-        18 of 50 planned cabinets are live. More get added to both wings over
-        time.
+        All {GAMES.length} planned cabinets are live across both wings.
       </footer>
     </div>
   );
@@ -12125,6 +14290,30 @@ function GlobalStyle() {
       .ga-yz-categories { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; max-width: 320px; }
       .ga-yz-cat { display: flex; justify-content: space-between; padding: 6px 10px; background: var(--surface-2); border-radius: 8px; font-size: 12px; border: none; cursor: pointer; }
       .ga-yz-cat:disabled { opacity: 0.55; cursor: default; }
+      .ga-wg-grid { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+      .ga-wg-row { display: flex; gap: 5px; }
+      .ga-wg-cell { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 18px; font-weight: 800; text-transform: uppercase; }
+      .ga-wg-keyboard { display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 340px; }
+      .ga-wg-krow { display: flex; justify-content: center; gap: 4px; }
+      .ga-wg-key { min-width: 26px; height: 38px; border-radius: 6px; background: var(--surface-2); border: none; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0 6px; }
+      .ga-wg-key.ga-wg-wide { min-width: 44px; font-size: 10px; }
+      .ga-slide-grid { display: grid; grid-template-columns: repeat(4, 56px); gap: 4px; border: 3px solid var(--coral); border-radius: 10px; padding: 6px; }
+      .ga-slide-cell { width: 56px; height: 56px; border-radius: 6px; background: var(--surface-2); border: none; font-size: 18px; font-weight: 800; cursor: pointer; }
+      .ga-slide-cell.is-blank { background: transparent; cursor: default; }
+      .ga-slide-cell:disabled { cursor: default; }
+      .ga-sokoban-grid { display: grid; gap: 1px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; }
+      .ga-sokoban-cell { width: 26px; height: 26px; background: transparent; display: flex; align-items: center; justify-content: center; }
+      .ga-sokoban-cell.is-wall { background: #4a3b63; }
+      .ga-sokoban-cell.is-target { background: rgba(255,220,128,0.15); }
+      .ga-sokoban-box { width: 18px; height: 18px; background: #ffb381; border-radius: 3px; }
+      .ga-sokoban-box.is-placed { background: #78efd9; }
+      .ga-sokoban-player { width: 14px; height: 14px; border-radius: 50%; background: #8dd1ff; }
+      .ga-sudoku-grid { display: grid; grid-template-columns: repeat(6, 40px); gap: 1px; border: 3px solid var(--teal); border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05); }
+      .ga-sudoku-cell { width: 40px; height: 40px; background: var(--surface-2); border: none; font-size: 15px; font-weight: 700; cursor: pointer; }
+      .ga-sudoku-cell.is-fixed { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.5); cursor: default; }
+      .ga-sudoku-cell.is-selected { outline: 2px solid var(--teal); outline-offset: -2px; }
+      .ga-sudoku-cell.border-right { border-right: 2px solid var(--teal); }
+      .ga-sudoku-cell.border-bottom { border-bottom: 2px solid var(--teal); }
 
       .ga-blockblast-board { display: grid; grid-template-columns: repeat(8, 32px); grid-auto-rows: 32px; gap: 3px; border: 3px solid var(--teal); border-radius: 12px; padding: 8px; background: rgba(0,0,0,0.18); }
       .ga-blockblast-cell { width: 32px; height: 32px; border-radius: 6px; background: rgba(255,255,255,0.1); border: none; padding: 0; cursor: pointer; }
